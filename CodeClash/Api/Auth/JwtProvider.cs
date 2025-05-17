@@ -1,14 +1,13 @@
-using Application.Interfaces.Auth;
-using Core;
-using Infrastructure.Configuration;
-using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Api.Configuration;
+using Application.Interfaces.Auth;
+using Core;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-
-namespace Infrastructure.Auth;
+namespace Api.Auth;
 
 public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
 {
