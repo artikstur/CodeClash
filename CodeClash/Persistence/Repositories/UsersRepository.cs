@@ -26,7 +26,7 @@ public class UsersRepository(WriteDbContext dbContext, IMapper mapper) : IUsersR
         var userEntity = await dbContext.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email);
-
+        
         return mapper.Map<User>(userEntity);
     }
 

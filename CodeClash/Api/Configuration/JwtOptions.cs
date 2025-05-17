@@ -1,4 +1,4 @@
-namespace Infrastructure.Configuration;
+namespace Api.Configuration;
 
 public class JwtOptions
 {
@@ -9,4 +9,6 @@ public class JwtOptions
     public string SecretKey { get; set; } = string.Empty;
 
     public int ExpiresHours { get; set; }
+    
+    public string CustomHeader { get; set; } = string.Empty;
 }
