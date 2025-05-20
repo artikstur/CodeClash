@@ -1,6 +1,7 @@
 using Api;
 using Api.Auth;
 using Api.Configuration;
+using Api.Configuration.Swagger;
 using Application.Interfaces.Auth;
 using Application.Interfaces.Repositories;
 using Application.Services;
@@ -20,7 +21,10 @@ var services = builder.Services;
 services.AddApiAuthentication(configuration);
 services.AddControllers();
 services.AddEndpointsApiExplorer();
-services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(x =>
+{
+    x.SchemaFilter<DefaultSchemaFilter>();
+});
 services.AddDbContext<WriteDbContext>(options =>
 {
     options.UseNpgsql(configuration.GetConnectionString(nameof(WriteDbContext)));
