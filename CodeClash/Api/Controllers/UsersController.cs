@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Api.Configuration;
 using Api.Contracts;
 using Application.Services;
@@ -10,7 +12,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController(UsersService usersService, IOptions<JwtOptions> options) : BaseController
+public class UsersController(UsersService usersService, IOptions<JwtOptions> options, ILogger<UsersController> logger) : BaseController
 {
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUserRequest request, 
@@ -36,7 +38,8 @@ public class UsersController(UsersService usersService, IOptions<JwtOptions> opt
                 Secure = true,
                 SameSite = SameSiteMode.Strict
             });
-
+        
+        logger.LogInformation("Пользователь успешно вошел в систему.");
         return Ok();
     }
     
@@ -50,6 +53,7 @@ public class UsersController(UsersService usersService, IOptions<JwtOptions> opt
 
         await usersService.Register(request.UserName, request.Email, request.Password);
         
+        logger.LogInformation("Пользователь успешно зарегистрирован.");
         return Ok();
     }
     
