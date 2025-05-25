@@ -40,4 +40,12 @@ public class UsersRepository(WriteDbContext dbContext, IMapper mapper) : IUsersR
             .Select(mapper.Map<User>)
             .ToList();
     }
+
+    public async Task<User> Get(long id)
+    {
+        var userEntity = await dbContext.Users
+            .FirstOrDefaultAsync(x => x.Id == id);
+        
+        return mapper.Map<User>(userEntity);
+    }
 }

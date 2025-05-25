@@ -3,6 +3,7 @@ using Api.Auth;
 using Api.Configuration;
 using Api.Configuration.Swagger;
 using Api.MIddlewares;
+using Application.Interfaces;
 using Application.Interfaces.Auth;
 using Application.Interfaces.Repositories;
 using Application.Services;
@@ -36,9 +37,14 @@ services.AddScoped<IJwtProvider, JwtProvider>();
 services.AddScoped<IPasswordHasher, PasswordHasher>();
 services.AddScoped<IUsersRepository, UsersRepository>();
 services.AddScoped<UsersService>();
+services.AddScoped<IProblemsRepository, ProblemsRepository>();
+services.AddScoped<ProblemsService>();
+services.AddScoped<ITestCasesRepository, TestCasesRepository>();
+services.AddScoped<TestCasesService>();
 services.AddAutoMapper();
 services.AddValidators();
 services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+services.AddScoped<IDbExtensions, DbExtensions>();
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)

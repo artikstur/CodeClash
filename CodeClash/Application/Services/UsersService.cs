@@ -1,5 +1,6 @@
 using Application.Interfaces.Auth;
 using Application.Interfaces.Repositories;
+using Core;
 
 namespace Application.Services;
 
@@ -23,4 +24,6 @@ public class UsersService(IUsersRepository usersRepository, IPasswordHasher pass
     
     public async Task Register(string userName, string email, string password) 
         => await usersRepository.Add(userName, email, passwordHasher.Generate(password));
+    
+    public async Task<User> Get(long id) => await usersRepository.Get(id);
 }

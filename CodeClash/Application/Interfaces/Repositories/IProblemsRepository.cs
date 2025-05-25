@@ -1,0 +1,18 @@
+using Application.Specs;
+using Core.Enums;
+using Core.Models;
+
+namespace Application.Interfaces.Repositories;
+
+public interface IProblemsRepository
+{
+    Task Add(string name, string description, ProblemLevel problemLevel);
+
+    Task Remove(long problemId);
+
+    Task SetStatus(long problemId, ProblemStatus status);
+
+    Task<Problem> Get(long problemId);
+    
+    Task<ICollection<Problem>> GetAll(ProblemsSpec spec);
+}

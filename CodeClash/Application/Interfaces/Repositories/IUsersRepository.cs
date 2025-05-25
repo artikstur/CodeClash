@@ -9,4 +9,6 @@ public interface IUsersRepository
     Task<User?> GetByEmail(string email);
     
     Task<List<User>> GetAllUsers();
+    
+    Task<User> Get(long id);
 }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Api.Configuration;
 using Api.Contracts;
@@ -53,5 +54,42 @@ public static class ApiExtensions
         services.AddAutoMapper(x => {
             x.AddProfile<DataBaseMappings>();
         });
+    }
+
+    public static bool TryGetId(this HttpContext context, out long id)
+    {
+        id = default;
+        
+        var hasRouteId = context.GetRouteData()?.Values.TryGetValue("id", out var routeIdObj) == true &&
+                         long.TryParse(routeIdObj?.ToString(), out id);
+        
+        var hasQueryId = !hasRouteId &&
+                         context.Request.Query.TryGetValue("id", out var queryIdVal) &&
+                         long.TryParse(queryIdVal.ToString(), out id);
+
+        return hasRouteId || hasQueryId;
+    }
+    
+    public static long? GetCurrentUserId(HttpContext context)
+    {
+        var idString = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                       ?? context.User.FindFirst("sub")?.Value;
+
+        if (long.TryParse(idString, out var id))
+        {
+            return id;
+        }
+
+        return null;
+    }
+
+    public static string? GetCurrentUserEmail(HttpContext context)
+    {
+        return context.User.FindFirst(ClaimTypes.Email)?.Value;
+    }
+
+    public static bool IsAuthenticated(HttpContext context)
+    {
+        return context.User.Identity?.IsAuthenticated == true;
     }
 }
