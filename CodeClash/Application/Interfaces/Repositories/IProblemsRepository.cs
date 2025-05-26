@@ -6,7 +6,9 @@ namespace Application.Interfaces.Repositories;
 
 public interface IProblemsRepository
 {
-    Task Add(string name, string description, ProblemLevel problemLevel);
+    Task Add(long userId, string name, string description, ProblemLevel problemLevel);
+    
+    Task Update(long id, string? name, string? description, ProblemLevel? problemLevel);
 
     Task Remove(long problemId);
 
@@ -15,4 +17,6 @@ public interface IProblemsRepository
     Task<Problem> Get(long problemId);
     
     Task<ICollection<Problem>> GetAll(ProblemsSpec spec);
+    
+    Task<bool> IsUserNotValid(long userId, long problemId);
 }

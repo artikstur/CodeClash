@@ -5,6 +5,10 @@ namespace Persistence.Entities;
 
 public class ProblemEntity: LongIdBase
 {
+    public long UserId { get; set; }
+
+    public UserEntity User { get; set; }
+    
     public string Name { get; set; }
     
     public string Description { get; set; }

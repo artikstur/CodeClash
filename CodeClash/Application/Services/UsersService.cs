@@ -4,7 +4,7 @@ using Core;
 
 namespace Application.Services;
 
-public class UsersService(IUsersRepository usersRepository, IPasswordHasher passwordHasher, IJwtProvider jwtProvider)
+public class UsersService(IUsersRepository usersRepository, IPasswordHasher passwordHasher, IJwtProvider jwtProvider) : BaseService
 {
     public async Task<string?> Login(string email, string password)
     {
