@@ -8,7 +8,7 @@ namespace Persistence.Repositories;
 
 public class TestCasesRepository(WriteDbContext dbContext, IMapper mapper): ITestCasesRepository
 {
-    public async Task Add(long userId, long problemId, string input, string output, bool isHidden)
+    public async Task Add(long problemId, string input, string output, bool isHidden)
     {
         var testCaseEntity = new TestCaseEntity
         {

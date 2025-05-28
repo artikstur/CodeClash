@@ -4,7 +4,7 @@ namespace Application.Interfaces.Repositories;
 
 public interface ITestCasesRepository
 {
-    Task Add(long userId, long problemId, string input, string output, bool isHidden);
+    Task Add(long problemId, string input, string output, bool isHidden);
 
     Task Remove(long testCaseId);
 

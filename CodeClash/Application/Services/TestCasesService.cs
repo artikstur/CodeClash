@@ -5,8 +5,8 @@ namespace Application.Services;
 
 public class TestCasesService(ITestCasesRepository testCasesRepository, IProblemsRepository problemsRepository): BaseService
 {
-    public async Task Add(long userId, long problemId, string input, string output, bool isHidden) =>
-        await testCasesRepository.Add(userId, problemId, input, output, isHidden);
+    public async Task Add(long problemId, string input, string output, bool isHidden) =>
+        await testCasesRepository.Add(problemId, input, output, isHidden);
     
     public async Task Remove(long userId, long problemId, long testCaseId)
     {

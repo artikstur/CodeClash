@@ -8,7 +8,7 @@ namespace Application.Services;
 public class ProblemsService(IProblemsRepository repository): BaseService
 {
     public async Task Add(long userId, string name, string description, ProblemLevel problemLevel) => 
-        await repository.Add( userId, name, description, problemLevel);
+        await repository.Add(userId, name, description, problemLevel);
 
     public async Task Remove(long userId, long problemId)
     {

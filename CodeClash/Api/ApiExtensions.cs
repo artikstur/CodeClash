@@ -53,6 +53,7 @@ public static class ApiExtensions
     {
         services.AddAutoMapper(x => {
             x.AddProfile<DataBaseMappings>();
+            x.AddProfile<ApiMappings>();
         });
     }
 
