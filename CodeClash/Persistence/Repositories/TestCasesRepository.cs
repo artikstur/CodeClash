@@ -42,9 +42,7 @@ public class TestCasesRepository(WriteDbContext dbContext, IMapper mapper): ITes
 
     public async Task Update(long testCaseId, string? input, string? output, bool? isHidden)
     {
-        var testCaseEntity = await dbContext.TestCases
-            .AsNoTracking()
-            .SingleAsync(x => x.Id == testCaseId);
+        var testCaseEntity = await dbContext.TestCases.SingleAsync(x => x.Id == testCaseId);
         
         testCaseEntity.Input = input ?? testCaseEntity.Input;
         testCaseEntity.Output = output ?? testCaseEntity.Output;

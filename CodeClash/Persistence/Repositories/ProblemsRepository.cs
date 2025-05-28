@@ -20,6 +20,7 @@ public class ProblemsRepository(WriteDbContext dbContext, IMapper mapper): IProb
             Description = description,
             Status = ProblemStatus.Hide,
             Level = problemLevel,
+            UserId = userId
         };
 
         await dbContext.Problems.AddAsync(problemEntity);

@@ -12,6 +12,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Authorize]
+[Route("api/[controller]")]
 public class ProblemsController(ProblemsService problemsService, IMapper mapper, ILogger<ProblemsController> logger) : BaseController
 {
     [HttpPost]
