@@ -7,6 +7,7 @@ using Application.Interfaces;
 using Application.Interfaces.Auth;
 using Application.Interfaces.Repositories;
 using Application.Services;
+using Infrastructure.RabbitMq;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 using Persistence.Repositories;
@@ -45,6 +46,7 @@ services.AddAutoMapper();
 services.AddValidators();
 services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 services.AddScoped<IDbExtensions, DbExtensions>();
+services.AddScoped<IRabbitMqService, RabbitMqService>();
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)

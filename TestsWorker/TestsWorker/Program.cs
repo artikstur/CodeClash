@@ -4,42 +4,85 @@ using System.Text;
 
 namespace TestsWorker;
 
+using System.Text;
+using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using Serilog;
+using Serilog.Events;
+
 public static class Program
 {
-    static async Task Main(string[] args)
+    public static async Task Main(string[] args)
     {
-        var hostName = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
-        var queueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
-        
-        var factory = new ConnectionFactory
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.Seq("http://localhost:5341")
+            .Enrich.FromLogContext()
+            .CreateLogger();
+
+        var loggerFactory = LoggerFactory.Create(builder =>
         {
-            HostName = hostName,
-            UserName = "guest",
-            Password = "guest"
-        };
+            builder.AddSerilog(); 
+        });
 
-        await using var connection = await factory.CreateConnectionAsync();
-        await using var channel = await connection.CreateChannelAsync();
-        
-        await channel.QueueDeclareAsync(queue: queueName,
-            durable: false,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
+        var logger = loggerFactory.CreateLogger("Worker");
 
-        var consumer = new AsyncEventingBasicConsumer(channel);
-
-        consumer.ReceivedAsync += (model, ea) =>
+        try
         {
-            var body = ea.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
-            Console.WriteLine($"Получено: {message}");
-            return Task.CompletedTask;
-        };
+            var guid = Guid.NewGuid();
+            var hostName = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
+            var queueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
 
-        await channel.BasicConsumeAsync(queue: queueName, autoAck: true, consumer: consumer);
+            var factory = new ConnectionFactory
+            {
+                HostName = hostName,
+                UserName = "guest",
+                Password = "guest"
+            };
 
-        Console.WriteLine("Нажмите enter для выхода.");
-        Console.ReadLine();
+            await using var connection = await factory.CreateConnectionAsync();
+            await using var channel = await connection.CreateChannelAsync();
+            await channel.BasicQosAsync(0, 5, false);
+
+            await channel.QueueDeclareAsync(queue: queueName,
+                durable: false,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+
+            var consumer = new AsyncEventingBasicConsumer(channel);
+
+            consumer.ReceivedAsync += async (model, ea) =>
+            {
+                try
+                {
+                    var body = ea.Body.ToArray();
+                    var message = Encoding.UTF8.GetString(body);
+                    logger.LogInformation("{Guid}: Получено сообщение: {Message}", guid, message);
+                    
+                    await channel.BasicAckAsync(ea.DeliveryTag, false);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "{Guid}: Ошибка при обработке сообщения", guid);
+                    await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: true);
+                }
+            };
+
+            await channel.BasicConsumeAsync(queue: queueName, autoAck: false, consumer: consumer);
+
+            logger.LogInformation("Нажмите Enter для выхода...");
+            Console.ReadLine();
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Приложение завершилось с фатальной ошибкой");
+        }
+        finally
+        {
+            Log.CloseAndFlush(); 
+        }
     }
 }
