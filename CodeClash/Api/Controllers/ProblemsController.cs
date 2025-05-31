@@ -4,6 +4,7 @@ using Application.Services;
 using Application.Specs;
 using AutoMapper;
 using Core.Enums;
+using Infrastructure.RabbitMq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistence.Entities;
@@ -13,8 +14,16 @@ namespace Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class ProblemsController(ProblemsService problemsService, IMapper mapper, ILogger<ProblemsController> logger) : BaseController
+public class ProblemsController(ProblemsService problemsService, IMapper mapper, 
+    ILogger<ProblemsController> logger, IRabbitMqService rabbitMqService) : BaseController
 {
+    [HttpPost("Solve")]
+    public async Task<IActionResult> Solve([FromBody] SolveRequest request)
+    {
+        await rabbitMqService.SendMessage("abu");
+        return Ok();
+    }
+
     [HttpPost]
     [UserIdFilter]
     public async Task<IActionResult> Add([FromBody] AddProblemRequest request)

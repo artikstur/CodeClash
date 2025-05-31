@@ -2,8 +2,47 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"       # apps
-      - "15672:15672"     # ui
+      - "5672:5672"
+      - "15672:15672"
+    hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  seq:
+    container_name: seq
+    image: datalust/seq:latest
+    ports:
+      - "5341:80"
+    environment:
+      - ACCEPT_EULA=Y
+    networks:
+      - app-network
+
+  tests-worker-1:
+    build:
+      context: ./TestsWorker
+      dockerfile: TestsWorker/Dockerfile
+    container_name: tests-worker-1
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_QUEUE=my_queue
+      - SEQ_URL=http://seq:80
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
