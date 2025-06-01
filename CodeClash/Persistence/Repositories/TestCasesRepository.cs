@@ -31,6 +31,14 @@ public class TestCasesRepository(WriteDbContext dbContext, IMapper mapper): ITes
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task<bool> IsExists(long testCaseId)
+    {
+        var testCaseEntity = await dbContext.TestCases
+            .FirstOrDefaultAsync(x => x.Id == testCaseId);
+
+        return testCaseEntity != null;
+    }
+
     public async Task<TestCase> Get(long testCaseId)
     {
         var testCaseEntity = await dbContext.TestCases

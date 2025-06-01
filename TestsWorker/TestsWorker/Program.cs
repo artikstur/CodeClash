@@ -5,6 +5,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Serilog;
 using TestsWorker.Dtos;
+using TestsWorker.Enums;
 
 namespace TestsWorker;
 
@@ -65,7 +66,8 @@ public static class Program
                     
                     var executedTestResult = new ExecutionResult
                     {
-                        Output = message
+                        Output = "this is program output",
+                        TestWorkerStatus = TestWorkerStatus.Ok,
                     };
 
                     var executedTestMessage = JsonSerializer.Serialize(executedTestResult);

@@ -1,7 +1,10 @@
+using Api.Contracts.ProblemsController;
 using Api.Contracts.TestCasesController;
 using Api.Filters;
+using Application.Interfaces.Repositories;
 using Application.Services;
 using AutoMapper;
+using Infrastructure.RabbitMq.Contacts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistence.Entities;
@@ -11,8 +14,24 @@ namespace Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class TestCasesController(TestCasesService testCasesService, IMapper mapper, ILogger<TestCasesController> logger) : BaseController
+public class TestCasesController(TestCasesService testCasesService, IMapper mapper, ILogger<TestCasesController> logger,
+    IRabbitMqSender rabbitMqSender, SolutionsService solutionsService) : BaseController
 {
+    [HttpPost("${testId:long}/AddNewForOneTask")]
+    [UserIdFilter]
+    [EntityExistenceFilter(typeof(TestCaseEntity), "testId")]
+    public async Task<IActionResult> Solve(long testId, [FromBody] SolveRequest request)
+    {
+        var userId = (long)HttpContext.Items["userId"]!;
+        var queueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
+
+        await solutionsService.AddSolutionForTestAsync(userId, testId);
+        await rabbitMqSender.SendMessage(request.Code, queueName);
+        logger.LogInformation($"Успешно добавлено новое решение в БД для {testId}");
+        
+        return Ok();
+    }
+    
     [HttpPost]
     [UserIdFilter]
     public async Task<IActionResult> Add([FromBody] AddTestCaseRequest request)

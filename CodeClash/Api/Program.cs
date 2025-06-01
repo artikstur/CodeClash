@@ -45,6 +45,8 @@ services.AddScoped<IProblemsRepository, ProblemsRepository>();
 services.AddScoped<ProblemsService>();
 services.AddScoped<ITestCasesRepository, TestCasesRepository>();
 services.AddScoped<TestCasesService>();
+services.AddScoped<SolutionsService>();
+services.AddScoped<ISolutionsRepository, SolutionsRepository>();
 services.AddAutoMapper();
 services.AddValidators();
 services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

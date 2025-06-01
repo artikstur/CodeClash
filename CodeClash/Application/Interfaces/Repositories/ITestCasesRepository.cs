@@ -8,6 +8,8 @@ public interface ITestCasesRepository
 
     Task Remove(long testCaseId);
 
+    Task<bool> IsExists(long testCaseId);
+    
     Task<TestCase> Get(long testCaseId);
 
     Task Update(long testCaseId, string? input, string? output, bool? isHidden);

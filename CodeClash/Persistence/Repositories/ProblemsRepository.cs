@@ -12,6 +12,14 @@ namespace Persistence.Repositories;
 
 public class ProblemsRepository(WriteDbContext dbContext, IMapper mapper): IProblemsRepository
 {
+    public async Task<bool> IsOutputsEquals(long testCaseId, string codeOutPut)
+    {
+        var testCase = await dbContext.TestCases
+            .SingleAsync(x => x.Id == testCaseId);
+
+        return testCase.Output == codeOutPut;
+    }
+
     public async Task Add(long userId, string name, string description, ProblemLevel problemLevel)
     {
         var problemEntity = new ProblemEntity

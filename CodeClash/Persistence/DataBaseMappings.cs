@@ -12,5 +12,6 @@ public class DataBaseMappings: Profile
         CreateMap<UserEntity, User>();
         CreateMap<ProblemEntity, Problem>();
         CreateMap<TestCaseEntity, TestCase>();
+        CreateMap<SolutionEntity, Solution>();
     }
 }

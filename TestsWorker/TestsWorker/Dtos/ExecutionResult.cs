@@ -1,6 +1,12 @@
+using TestsWorker.Enums;
+
 namespace TestsWorker.Dtos;
 
 public class ExecutionResult
 {
-    public string Output { get; set; }
+    public long SolutionId { get; set; }
+    
+    public string? Output { get; set; }
+
+    public TestWorkerStatus TestWorkerStatus { get; set; }
 }

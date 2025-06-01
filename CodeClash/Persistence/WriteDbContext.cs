@@ -11,6 +11,8 @@ public class WriteDbContext(DbContextOptions<WriteDbContext> options) : DbContex
     
     public DbSet<TestCaseEntity> TestCases { get; set; }
     
+    public DbSet<SolutionEntity> Solutions { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

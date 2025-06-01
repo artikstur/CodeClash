@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Application.Interfaces;
+using Application.Interfaces.Repositories;
 using Core.Models;
 using Hangfire;
 using Microsoft.Extensions.Hosting;
@@ -41,8 +42,9 @@ public class RabbitMqConsumer(ILogger<RabbitMqConsumer> logger): BackgroundServi
                 var json = Encoding.UTF8.GetString(body);
                 logger.LogInformation("Получено сообщение: {json}", json);
                 var result = JsonSerializer.Deserialize<ExecutionResult>(json);
-                
-                if (result != null)
+
+                var isValid = result != null;
+                if (isValid)
                 {
                     BackgroundJob.Enqueue<IResultTaskService>(x => x.UpdateTaskStatusAsync(result));
                     logger.LogInformation("Поставлена задача в Hangfire на обновление");

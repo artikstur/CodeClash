@@ -1,5 +1,6 @@
 using Api.Contracts.ProblemsController;
 using Api.Filters;
+using Application.Interfaces.Repositories;
 using Application.Services;
 using Application.Specs;
 using AutoMapper;
@@ -16,17 +17,8 @@ namespace Api.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 public class ProblemsController(ProblemsService problemsService, IMapper mapper, 
-    ILogger<ProblemsController> logger, IRabbitMqSender rabbitMqSender) : BaseController
+    ILogger<ProblemsController> logger) : BaseController
 {
-    [HttpPost("Solve")]
-    public async Task<IActionResult> Solve([FromBody] SolveRequest request)
-    {
-        var queueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
-        
-        await rabbitMqSender.SendMessage(request.Code, queueName);
-        return Ok();
-    }
-
     [HttpPost]
     [UserIdFilter]
     public async Task<IActionResult> Add([FromBody] AddProblemRequest request)
