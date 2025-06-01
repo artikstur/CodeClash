@@ -5,6 +5,7 @@ using Application.Specs;
 using AutoMapper;
 using Core.Enums;
 using Infrastructure.RabbitMq;
+using Infrastructure.RabbitMq.Contacts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistence.Entities;
@@ -15,12 +16,14 @@ namespace Api.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 public class ProblemsController(ProblemsService problemsService, IMapper mapper, 
-    ILogger<ProblemsController> logger, IRabbitMqService rabbitMqService) : BaseController
+    ILogger<ProblemsController> logger, IRabbitMqSender rabbitMqSender) : BaseController
 {
     [HttpPost("Solve")]
     public async Task<IActionResult> Solve([FromBody] SolveRequest request)
     {
-        await rabbitMqService.SendMessage("abu");
+        var queueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
+        
+        await rabbitMqSender.SendMessage(request.Code, queueName);
         return Ok();
     }
 

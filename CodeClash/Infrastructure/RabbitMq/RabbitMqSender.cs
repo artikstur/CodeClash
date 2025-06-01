@@ -1,21 +1,15 @@
 using System.Text;
-using System.Text.Json;
+using Infrastructure.RabbitMq.Contacts;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
 namespace Infrastructure.RabbitMq;
 
-public class RabbitMqService: IRabbitMqService
+public class RabbitMqSender(ILogger<RabbitMqSender> logger): IRabbitMqSender
 {
-    public async Task SendMessage(object obj)
-    {
-        var message = JsonSerializer.Serialize(obj);
-        await SendMessage(message);
-    }
-
-    public async Task SendMessage(string message)
+    public async Task SendMessage(string message, string queueName)
     {
         var hostName = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
-        var queueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
         
         var factory = new ConnectionFactory
         {
@@ -40,5 +34,6 @@ public class RabbitMqService: IRabbitMqService
         };
 
         await channel.BasicPublishAsync("", queueName, mandatory: true, basicProperties: props, body: messageBodyBytes);
+        logger.LogInformation("Отправлено сообщение в очередь");
     }
 }

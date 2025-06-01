@@ -7,7 +7,10 @@ using Application.Interfaces;
 using Application.Interfaces.Auth;
 using Application.Interfaces.Repositories;
 using Application.Services;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Infrastructure.RabbitMq;
+using Infrastructure.RabbitMq.Contacts;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 using Persistence.Repositories;
@@ -46,7 +49,15 @@ services.AddAutoMapper();
 services.AddValidators();
 services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 services.AddScoped<IDbExtensions, DbExtensions>();
-services.AddScoped<IRabbitMqService, RabbitMqService>();
+services.AddScoped<IRabbitMqSender, RabbitMqSender>();
+services.AddHangfire(config =>
+    config.UsePostgreSqlStorage(options =>
+    {
+        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString(nameof(WriteDbContext)));
+    }));
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<IResultTaskService, ResultTaskService>();
+builder.Services.AddHostedService<RabbitMqConsumer>();
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)

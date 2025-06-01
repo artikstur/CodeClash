@@ -1,8 +1,10 @@
 ﻿using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Serilog;
+using TestsWorker.Dtos;
 
 namespace TestsWorker;
 
@@ -30,7 +32,8 @@ public static class Program
         {
             var guid = Guid.NewGuid();
             var hostName = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
-            var queueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
+            var listenQueueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
+            var senderQueueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE_RESULTS") ?? "results_queue";
             
             var factory = new ConnectionFactory
             {
@@ -44,7 +47,7 @@ public static class Program
             await using var channel = await connection.CreateChannelAsync();
             await channel.BasicQosAsync(0, 5, false);
 
-            await channel.QueueDeclareAsync(queue: queueName,
+            await channel.QueueDeclareAsync(queue: listenQueueName,
                 durable: false,
                 exclusive: false,
                 autoDelete: false,
@@ -58,8 +61,23 @@ public static class Program
                 {
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
-                    logger.LogInformation("{Guid}: Получено сообщение: {Message}", guid, message);
+                    logger.LogInformation("{Guid}: Получено сообщение", guid);
                     
+                    var executedTestResult = new ExecutionResult
+                    {
+                        Output = message
+                    };
+
+                    var executedTestMessage = JsonSerializer.Serialize(executedTestResult);
+                    var sendMessageDto = new SendMessageDto
+                    {   
+                        Message = executedTestMessage,
+                        QueueName = senderQueueName,
+                        Channel = channel,
+                    };
+
+                    await Sender.SendMessage(sendMessageDto);
+                    logger.LogInformation("{Guid}: Отправлено сообщение", guid);
                     await channel.BasicAckAsync(ea.DeliveryTag, false);
                 }
                 catch (Exception ex)
@@ -69,7 +87,7 @@ public static class Program
                 }
             };
 
-            await channel.BasicConsumeAsync(queue: queueName, autoAck: false, consumer: consumer);
+            await channel.BasicConsumeAsync(queue: listenQueueName, autoAck: false, consumer: consumer);
 
             logger.LogInformation("Worker запущен. Ожидание сообщений...");
             await Task.Delay(Timeout.Infinite);
@@ -80,7 +98,7 @@ public static class Program
         }
         finally
         {
-            Log.CloseAndFlush(); 
+            await Log.CloseAndFlushAsync(); 
         }
     }
 }

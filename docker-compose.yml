@@ -32,6 +32,25 @@ services:
       dockerfile: TestsWorker/Dockerfile
     container_name: tests-worker-1
     environment:
+      - RABBITMQ_QUEUE_RESULTS=results_queue
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_QUEUE=my_queue
+      - SEQ_URL=http://seq:80
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    networks:
+      - app-network
+
+  tests-worker-2:
+    build:
+      context: ./TestsWorker
+      dockerfile: TestsWorker/Dockerfile
+    container_name: tests-worker-2
+    environment:
+      - RABBITMQ_QUEUE_RESULTS=results_queue
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_QUEUE=my_queue
       - SEQ_URL=http://seq:80
