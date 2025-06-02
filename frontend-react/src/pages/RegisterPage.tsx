@@ -17,14 +17,14 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const RegisterPage = () => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<any>({
     userName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<any>({});
 
   const validate = () => {
     const newErrors = {};

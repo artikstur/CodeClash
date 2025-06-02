@@ -18,13 +18,13 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const LoginPage = () => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<any>({
     email: "",
     password: "",
   });
   const loginMutation = useLoginMutation();
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<any>({});
 
   const validate = () => {
     const newErrors = {};

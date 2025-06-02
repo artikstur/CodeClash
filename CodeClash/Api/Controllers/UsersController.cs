@@ -57,7 +57,6 @@ public class UsersController(UsersService usersService, IOptions<JwtOptions> opt
         return Ok();
     }
     
-    [Authorize]
     [HttpGet("test")]
     public async Task<IActionResult> TestMethod()
     {
