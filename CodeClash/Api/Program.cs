@@ -61,22 +61,35 @@ builder.Services.AddHangfireServer();
 builder.Services.AddScoped<IResultTaskService, ResultTaskService>();
 builder.Services.AddHostedService<RabbitMqConsumer>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.AllowAnyOrigin() 
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
     .WriteTo.Console()
-    .WriteTo.Seq("http://localhost:5341")
+    .WriteTo.Seq(configuration["Serilog:WriteTo:0:Args:serverUrl"] ?? "http://localhost:5341")
     .CreateLogger();
 
 builder.Host.UseSerilog();
 
 var app = builder.Build();
+app.Services.ApplyMigrations();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<UserDataLoggingMiddleware>();

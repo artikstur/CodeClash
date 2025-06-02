@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import Title from "../components/Title.tsx";
+import { useLoginMutation } from '../hooks/useLoginMutation.ts';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -21,6 +22,7 @@ const LoginPage = () => {
     email: "",
     password: "",
   });
+  const loginMutation = useLoginMutation();
 
   const [errors, setErrors] = useState({});
 
@@ -37,16 +39,18 @@ const LoginPage = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    const loginUserRequest = {
-      email: form.email,
-      password: form.password,
-    };
-
-    console.log("Отправка на API:", loginUserRequest);
+    loginMutation.mutate(form, {
+      onSuccess: (data) => {
+        console.log('Успешный логин:', data);
+      },
+      onError: (error: Error) => {
+        console.error('Ошибка логина:', error.message);
+      },
+    });
   };
 
   return (
