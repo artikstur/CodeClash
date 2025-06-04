@@ -3,6 +3,9 @@ import styled, { createGlobalStyle } from "styled-components";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import Title from "../components/Title.tsx";
 import {useRegisterMutation} from "../hooks/useRegisterMutation.ts";
+import {useErrorNotification} from "../hooks/useErrorNotification.ts";
+import ErrorNotification from "../components/ErrorNotification.tsx";
+import { Link } from "react-router-dom";
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -34,6 +37,12 @@ const RegisterPage = () => {
 
   const [errors, setErrors] = useState<any>({});
   const registerMutation = useRegisterMutation();
+  const {
+    showError,
+    message: errorMessage,
+    show: showNotification,
+    close: closeNotification,
+  } = useErrorNotification();
 
   const validate = () => {
     const newErrors = {};
@@ -60,6 +69,7 @@ const RegisterPage = () => {
         console.log('Успешная регистрация:', data);
       },
       onError: (error: Error) => {
+        showNotification("Произошла ошибка при входе");
         console.error('Ошибка регистрации:', error.message);
       },
     });
@@ -121,7 +131,18 @@ const RegisterPage = () => {
           {errors.confirmPassword && <Error>{errors.confirmPassword}</Error>}
 
           <Button type="submit">Зарегистрироваться</Button>
+          <RegisterLinkWrapper>
+            <span>Уже есть аккаунт?</span>
+            <StyledLink to="/login">Войти</StyledLink>
+          </RegisterLinkWrapper>
         </FormCard>
+        {showError && (
+          <ErrorNotification
+            show={showError}
+            message={errorMessage}
+            onClose={closeNotification}
+          />
+        )}
       </Wrapper>
     </>
   );
@@ -221,6 +242,28 @@ const Error = styled.div`
   color: #ff6b6b;
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
+`;
+
+const RegisterLinkWrapper = styled.div`
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+  color: #ccc;
+
+  span {
+    margin-right: 0.25rem;
+  }
+`;
+
+const StyledLink = styled(Link)`
+  color: #ff6b6b;
+  text-decoration: none;
+  font-weight: bold;
+
+  &:hover {
+    text-decoration: underline;
+    color: #ff4d4d;
+  }
 `;
 
 export default RegisterPage;
