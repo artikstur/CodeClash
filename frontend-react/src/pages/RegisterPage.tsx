@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import Title from "../components/Title.tsx";
+import {useRegisterMutation} from "../hooks/useRegisterMutation.ts";
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -16,8 +17,15 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
+type RegisterForm = {
+  userName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
 const RegisterPage = () => {
-  const [form, setForm] = useState<any>({
+  const [form, setForm] = useState<RegisterForm>({
     userName: "",
     email: "",
     password: "",
@@ -25,6 +33,7 @@ const RegisterPage = () => {
   });
 
   const [errors, setErrors] = useState<any>({});
+  const registerMutation = useRegisterMutation();
 
   const validate = () => {
     const newErrors = {};
@@ -46,13 +55,14 @@ const RegisterPage = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    const registerUserRequest = {
-      userName: form.userName,
-      password: form.password,
-      email: form.email,
-    };
-
-    console.log("Отправка на API:", registerUserRequest);
+    registerMutation.mutate(form, {
+      onSuccess: (data) => {
+        console.log('Успешная регистрация:', data);
+      },
+      onError: (error: Error) => {
+        console.error('Ошибка регистрации:', error.message);
+      },
+    });
   };
 
   return (

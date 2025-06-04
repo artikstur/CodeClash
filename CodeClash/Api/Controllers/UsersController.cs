@@ -35,8 +35,8 @@ public class UsersController(UsersService usersService, IOptions<JwtOptions> opt
             options: new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict
+                Secure = false,
+                SameSite = SameSiteMode.Lax
             });
         
         logger.LogInformation("Пользователь успешно вошел в систему.");

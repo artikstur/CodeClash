@@ -17,8 +17,13 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
+type LoginForm = {
+  email: string;
+  password: string
+}
+
 const LoginPage = () => {
-  const [form, setForm] = useState<any>({
+  const [form, setForm] = useState<LoginForm>({
     email: "",
     password: "",
   });
