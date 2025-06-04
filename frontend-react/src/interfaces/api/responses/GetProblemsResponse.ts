@@ -1,4 +1,4 @@
-export type ProblemLevel = 1 | 2 | 3;
+import type {ProblemLevel} from "../enums/ProblemLevel.ts";
 
 export interface GetProblemResponse {
   name: string;

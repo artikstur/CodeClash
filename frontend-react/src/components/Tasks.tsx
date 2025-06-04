@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import type { GetProblemResponse, ProblemLevel } from '../interfaces/api/GetProblemsResponse.ts';
+import type { GetProblemResponse, ProblemLevel } from '../interfaces/api/responses/GetProblemsResponse.ts';
 import styled from 'styled-components';
-import { FaArrowRight, FaPlus } from 'react-icons/fa';
+import {FaArrowRight, FaFilter, FaPlus} from 'react-icons/fa';
+import {useCreateProblem} from "../hooks/api/useCreateProblem.ts";
+import { useGetProblems } from "../hooks/api/useGetProblems.ts";
+import {useErrorNotification} from "../hooks/useErrorNotification.ts";
+import ErrorNotification from "./ErrorNotification.tsx";
+import type {SortDirection} from "../interfaces/api/enums/SortDirection.ts";
+import type ProblemsSpec from "../interfaces/api/requests/ProblemsSpec.ts";
 
 export const getLevelLabel = (level: ProblemLevel): string => {
   switch (level) {
@@ -19,14 +25,7 @@ const initialFilters = {
   sortDirection: '',
 };
 
-const dummyProblems: GetProblemResponse[] = [
-  { name: 'Two Sum', description: 'Найди два числа, сумма которых равна target.', level: 1 },
-  { name: 'Binary Tree Paths', description: 'Верни все пути от корня до листьев.', level: 2 },
-  { name: 'Hard Graph Problem', description: 'Реши задачу на графы с ограничениями.', level: 3 },
-];
-
 const Tasks = () => {
-  const [problems, setProblems] = useState<GetProblemResponse[]>([]);
   const [filter, setFilter] = useState<'all' | 'mine'>('all');
   const [view, setView] = useState<'list' | 'add'>('list');
 
@@ -37,11 +36,20 @@ const Tasks = () => {
     sortDirection: '',
   });
 
-  useEffect(() => {
-    setProblems(dummyProblems);
-  }, [filters]);
+  const [appliedFilters, setAppliedFilters] = useState(filters);
 
-  const filteredProblems = filter === 'all' ? problems : problems.filter((_, i) => i % 2 === 0);
+  const spec = {
+    name: appliedFilters.name || undefined,
+    level: appliedFilters.level ? (parseInt(filters.level) as ProblemLevel) : undefined,
+    sortBy: appliedFilters.sortBy || undefined,
+    sortDirection: appliedFilters.sortDirection
+      ? (parseInt(appliedFilters.sortDirection) as SortDirection)
+      : undefined,
+    take: 25,
+    page: 1,
+  } as ProblemsSpec;
+
+  const { data: problems = [], isLoading, error } = useGetProblems(spec);
 
   return (
     <Wrapper>
@@ -60,7 +68,10 @@ const Tasks = () => {
               type="text"
               placeholder="Поиск по имени..."
               value={filters.name}
-              onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => {
+                console.log(filters)
+                setFilters(prev => ({ ...prev, name: e.target.value }))}
+              }
             />
 
             <Select
@@ -90,13 +101,21 @@ const Tasks = () => {
               <option value="1">По возрастанию</option>
               <option value="2">По убыванию</option>
             </Select>
-            <ResetButton onClick={() => setFilters(initialFilters)}>
+
+            <AddButton onClick={() => setAppliedFilters(filters)} title="Применить фильтры">
+              <FaFilter color="white" />
+            </AddButton>
+
+            <ResetButton onClick={() => {
+              setFilters(initialFilters);
+              setAppliedFilters(initialFilters);
+            }}>
               Сбросить фильтры
             </ResetButton>
           </FilterRow>
 
           <ProblemList>
-            {filteredProblems.map((problem, index) => (
+            {problems.map((problem, index) => (
               <ProblemCard key={index}>
                 <Info>
                   <Title>{problem.name}</Title>
@@ -120,6 +139,13 @@ const AddTask = ({ onBack }: { onBack: () => void }) => {
   const [description, setDescription] = useState('');
   const [level, setLevel] = useState('');
   const [error, setError] = useState('');
+  const createProblemMutation = useCreateProblem();
+  const {
+    showError,
+    message: errorMessage,
+    show: showNotification,
+    close: closeNotification,
+  } = useErrorNotification();
 
   const handleSubmit = () => {
     if (name.length < 8 || name.length > 50) return setError('Имя должно быть от 8 до 50 символов');
@@ -129,12 +155,19 @@ const AddTask = ({ onBack }: { onBack: () => void }) => {
     const payload = {
       name,
       description,
-      level: parseInt(level)
+      problemLevel: parseInt(level) as 1 | 2 | 3,
     };
 
-    console.log('Добавляем задачу:', payload);
-    setError('');
-    onBack();
+    createProblemMutation.mutate(payload, {
+      onSuccess: (data) => {
+        setError('');
+        onBack();
+      },
+      onError: (error: Error) => {
+        showNotification("Произошла ошибка при добавлении задачи");
+        console.error('Ошибка логина:', error.message);
+      },
+    });
   };
 
   return (
@@ -166,13 +199,45 @@ const AddTask = ({ onBack }: { onBack: () => void }) => {
 
         {error && <ErrorText>{error}</ErrorText>}
 
-        <AddButton onClick={handleSubmit}>
-          <FaPlus /> <span>Добавить</span>
+        <AddButton onClick={handleSubmit} disabled={createProblemMutation.isPending}>
+          {createProblemMutation.isPending ? (
+            <>
+              <Spinner /> <span>Добавляем...</span>
+            </>
+          ) : (
+            <>
+              <FaPlus /> <span>Добавить</span>
+            </>
+          )}
         </AddButton>
+
+        {showError && (
+          <ErrorNotification
+            show={showError}
+            message={errorMessage}
+            onClose={closeNotification}
+          />
+        )}
       </Form>
     </div>
   );
 };
+
+const Spinner = styled.div`
+  border: 2px solid #ccc;
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 const Wrapper = styled.div`
   display: flex;
@@ -201,22 +266,20 @@ const FilterButton = styled.button<{ active: boolean }>`
   }
 `;
 
-const AddButton = styled.button`
-  background: #d62828;
-  color: white;
+const AddButton = styled.button<{ disabled?: boolean }>`
+  background: ${({ disabled }) =>
+          disabled ? '#444' : 'linear-gradient(90deg, #d62828, #a4161a)'};
+  color: ${({ disabled }) => (disabled ? '#aaa' : 'white')};
   border: none;
-  padding: 0.6rem 1.2rem;
+  padding: 0.7rem 1.4rem;
   border-radius: 10px;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
   font-weight: bold;
   display: flex;
-  gap: 0.5rem;
   align-items: center;
-  font-family: inherit;
-  transition: 0.2s;
-  &:hover {
-    background: #a4161a;
-  }
+  gap: 0.5rem;
+  transition: all 0.2s;
+  opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
 `;
 
 const FilterRow = styled.div`

@@ -1,0 +1,1 @@
+export type ProblemLevel = 1 | 2 | 3;

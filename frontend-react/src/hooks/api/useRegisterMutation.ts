@@ -16,7 +16,8 @@ const registerUser = async (data: { email: string; password: string; userName: s
     throw new Error(error.message || 'Ошибка при регистрации');
   }
 
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 };
 
 export const useRegisterMutation = () =>

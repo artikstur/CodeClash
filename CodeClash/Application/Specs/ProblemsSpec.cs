@@ -6,7 +6,5 @@ public class ProblemsSpec: BaseSpec
 {
     public string? Name { get; set; }
     
-    public string? Description { get; set; }
-    
     public ProblemLevel? Level { get; set; }
 }

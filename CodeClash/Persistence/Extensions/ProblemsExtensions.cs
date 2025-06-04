@@ -14,11 +14,6 @@ public static class ProblemsExtensions
             query = query.Where(x => x.Name.ToLower().Contains(spec.Name.ToLower()));
         }
         
-        if (!string.IsNullOrEmpty(spec.Description))
-        {
-            query = query.Where(x => x.Description.ToLower().Contains(spec.Description.ToLower()));
-        }
-        
         if (spec.Level != default)
         {
             query = query.Where(x => x.Level == spec.Level);
@@ -39,7 +34,6 @@ public static class ProblemsExtensions
         return spec.SortBy?.ToLower() switch
         {
             nameof(spec.Name) => p => p.Name,
-            nameof(spec.Description) => p => p.Description,
             nameof(spec.Level) => p => p.Level,
             _ => p => p.Id
         };

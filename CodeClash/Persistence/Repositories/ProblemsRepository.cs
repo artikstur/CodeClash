@@ -26,7 +26,7 @@ public class ProblemsRepository(WriteDbContext dbContext, IMapper mapper): IProb
         {
             Name = name,
             Description = description,
-            Status = ProblemStatus.Hide,
+            Status = ProblemStatus.Open,
             Level = problemLevel,
             UserId = userId
         };

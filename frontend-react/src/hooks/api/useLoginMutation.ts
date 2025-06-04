@@ -16,7 +16,8 @@ const loginUser = async (data: { email: string; password: string }) => {
     throw new Error(error.message || 'Ошибка при авторизации');
   }
 
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 };
 
 export const useLoginMutation = () =>
