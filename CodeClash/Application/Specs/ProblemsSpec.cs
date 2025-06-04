@@ -8,7 +8,5 @@ public class ProblemsSpec: BaseSpec
     
     public string? Description { get; set; }
     
-    public ProblemStatus? Status { get; set; }
-    
     public ProblemLevel? Level { get; set; }
 }

@@ -19,11 +19,6 @@ public static class ProblemsExtensions
             query = query.Where(x => x.Description.ToLower().Contains(spec.Description.ToLower()));
         }
         
-        if (spec.Status != default)
-        {
-            query = query.Where(x => x.Status == spec.Status);
-        }
-        
         if (spec.Level != default)
         {
             query = query.Where(x => x.Level == spec.Level);
@@ -45,7 +40,6 @@ public static class ProblemsExtensions
         {
             nameof(spec.Name) => p => p.Name,
             nameof(spec.Description) => p => p.Description,
-            nameof(spec.Status) => p => p.Status,
             nameof(spec.Level) => p => p.Level,
             _ => p => p.Id
         };

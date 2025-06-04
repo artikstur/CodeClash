@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import Title from "../components/Title.tsx";
-import { useLoginMutation } from '../hooks/useLoginMutation.ts';
+import { useLoginMutation } from '../hooks/api/useLoginMutation.ts';
 import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import ErrorNotification from "../components/ErrorNotification.tsx";
 import { Link } from "react-router-dom";
