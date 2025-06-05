@@ -8,6 +8,7 @@ import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import ErrorNotification from "./ErrorNotification.tsx";
 import type {SortDirection} from "../interfaces/api/enums/SortDirection.ts";
 import type ProblemsSpec from "../interfaces/api/requests/ProblemsSpec.ts";
+import {useGetUserProblems} from "../hooks/api/useGetUserProblems.ts";
 
 export const getLevelLabel = (level: ProblemLevel): string => {
   switch (level) {
@@ -29,18 +30,12 @@ const Tasks = () => {
   const [filter, setFilter] = useState<'all' | 'mine'>('all');
   const [view, setView] = useState<'list' | 'add'>('list');
 
-  const [filters, setFilters] = useState({
-    name: '',
-    level: '',
-    sortBy: '',
-    sortDirection: '',
-  });
-
-  const [appliedFilters, setAppliedFilters] = useState(filters);
+  const [filters, setFilters] = useState(initialFilters);
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
 
   const spec = {
     name: appliedFilters.name || undefined,
-    level: appliedFilters.level ? (parseInt(filters.level) as ProblemLevel) : undefined,
+    level: appliedFilters.level ? (parseInt(appliedFilters.level) as ProblemLevel) : undefined,
     sortBy: appliedFilters.sortBy || undefined,
     sortDirection: appliedFilters.sortDirection
       ? (parseInt(appliedFilters.sortDirection) as SortDirection)
@@ -49,15 +44,36 @@ const Tasks = () => {
     page: 1,
   } as ProblemsSpec;
 
-  const { data: problems = [], isLoading, error } = useGetProblems(spec);
+  const { data: allProblems = [], isLoading: isLoadingAll } = useGetProblems(spec, filter === 'all');
+  const { data: userProblems = [], isLoading: isLoadingMine } = useGetUserProblems(spec, filter === 'mine');
+
+  const problems = filter === 'mine' ? userProblems : allProblems;
+  const isLoading = filter === 'mine' ? isLoadingMine : isLoadingAll;
+
+  const handleApplyFilters = () => {
+    setAppliedFilters(filters);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(initialFilters);
+    setAppliedFilters(initialFilters);
+  };
 
   return (
     <Wrapper>
       {view === 'list' && (
         <>
           <TopBar>
-            <FilterButton active={filter === 'all'} onClick={() => setFilter('all')}>Все</FilterButton>
-            <FilterButton active={filter === 'mine'} onClick={() => setFilter('mine')}>Мои</FilterButton>
+            <FilterButton active={filter === 'all'} onClick={() => {
+              handleResetFilters()
+              setFilter('all')
+            }}>
+              Все
+            </FilterButton>
+            <FilterButton active={filter === 'mine'} onClick={() => {
+              handleResetFilters()
+              setFilter('mine')}
+            }>Мои</FilterButton>
             <AddButton onClick={() => setView('add')}>
               <FaPlus /> <span>Добавить</span>
             </AddButton>
@@ -68,64 +84,48 @@ const Tasks = () => {
               type="text"
               placeholder="Поиск по имени..."
               value={filters.name}
-              onChange={(e) => {
-                console.log(filters)
-                setFilters(prev => ({ ...prev, name: e.target.value }))}
-              }
+              onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
             />
-
-            <Select
-              value={filters.level}
-              onChange={(e) => setFilters(prev => ({ ...prev, level: e.target.value }))}
-            >
+            <Select value={filters.level} onChange={(e) => setFilters(prev => ({ ...prev, level: e.target.value }))}>
               <option value="">Уровень</option>
               <option value="1">Easy</option>
               <option value="2">Medium</option>
               <option value="3">Hard</option>
             </Select>
-
-            <Select
-              value={filters.sortBy}
-              onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-            >
+            <Select value={filters.sortBy} onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}>
               <option value="">Сортировать по</option>
               <option value="name">Имя</option>
               <option value="level">Уровень</option>
             </Select>
-
-            <Select
-              value={filters.sortDirection}
-              onChange={(e) => setFilters(prev => ({ ...prev, sortDirection: e.target.value }))}
-            >
+            <Select value={filters.sortDirection} onChange={(e) => setFilters(prev => ({ ...prev, sortDirection: e.target.value }))}>
               <option value="">Направление</option>
               <option value="1">По возрастанию</option>
               <option value="2">По убыванию</option>
             </Select>
-
-            <AddButton onClick={() => setAppliedFilters(filters)} title="Применить фильтры">
+            <AddButton onClick={handleApplyFilters} title="Применить фильтры">
               <FaFilter color="white" />
             </AddButton>
-
-            <ResetButton onClick={() => {
-              setFilters(initialFilters);
-              setAppliedFilters(initialFilters);
-            }}>
+            <ResetButton onClick={handleResetFilters}>
               Сбросить фильтры
             </ResetButton>
           </FilterRow>
 
-          <ProblemList>
-            {problems.map((problem, index) => (
-              <ProblemCard key={index}>
-                <Info>
-                  <Title>{problem.name}</Title>
-                  <Description>{problem.description}</Description>
-                  <Level level={problem.level}>{getLevelLabel(problem.level)}</Level>
-                </Info>
-                <Action><FaArrowRight /></Action>
-              </ProblemCard>
-            ))}
-          </ProblemList>
+          {isLoading ? (
+            <p>Загрузка задач...</p>
+          ) : (
+            <ProblemList>
+              {problems.map((problem, index) => (
+                <ProblemCard key={index}>
+                  <Info>
+                    <Title>{problem.name}</Title>
+                    <Description>{problem.description}</Description>
+                    <Level level={problem.level}>{getLevelLabel(problem.level)}</Level>
+                  </Info>
+                  <Action><FaArrowRight /></Action>
+                </ProblemCard>
+              ))}
+            </ProblemList>
+          )}
         </>
       )}
 
@@ -133,6 +133,7 @@ const Tasks = () => {
     </Wrapper>
   );
 };
+
 
 const AddTask = ({ onBack }: { onBack: () => void }) => {
   const [name, setName] = useState('');

@@ -39,6 +39,9 @@ public class ProblemsService(IProblemsRepository repository): BaseService
 
     public async Task<ICollection<Problem>> GetAll(ProblemsSpec spec) =>
         await repository.GetAll(spec);
+    
+    public async Task<ICollection<Problem>> GetUserProblems(ProblemsSpec spec, long userId) =>
+        await repository.GetUserProblems(spec, userId);
 
     public async Task Update(long userId, long problemId, string? name, string? description, ProblemLevel? problemLevel)
     {

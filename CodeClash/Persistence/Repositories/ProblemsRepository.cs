@@ -93,6 +93,19 @@ public class ProblemsRepository(WriteDbContext dbContext, IMapper mapper): IProb
 
         return mapper.Map<ICollection<Problem>>(problemEntities);
     }
+    
+    public async Task<ICollection<Problem>> GetUserProblems(ProblemsSpec spec, long userId)
+    {
+        var problemEntities = await dbContext.Problems
+            .AsNoTracking()
+            .Filter(spec)
+            .Sort(spec)
+            .Where(x => x.UserId == userId)
+            .Page(spec)
+            .ToListAsync();
+
+        return mapper.Map<ICollection<Problem>>(problemEntities);
+    }
 
     public async Task<bool> IsUserNotValid(long userId, long problemId)
     {

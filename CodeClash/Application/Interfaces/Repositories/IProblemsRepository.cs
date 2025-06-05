@@ -20,5 +20,7 @@ public interface IProblemsRepository
     
     Task<ICollection<Problem>> GetAll(ProblemsSpec spec);
     
+    Task<ICollection<Problem>> GetUserProblems(ProblemsSpec spec, long userId);
+    
     Task<bool> IsUserNotValid(long userId, long problemId);
 }

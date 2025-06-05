@@ -98,4 +98,17 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
         
         return Ok(mapper.Map<ICollection<GetProblemResponse>>(items));
     }
+    
+    [HttpGet("User")]
+    [UserIdFilter]
+    public async Task<IActionResult> GetManyByUser([FromQuery] ProblemsSpec spec)
+    {
+        var userId = (long)HttpContext.Items["userId"]!;
+        logger.LogInformation($"Запрос на получение списка задач по конкретному пользователю");
+        
+        var items = await problemsService.GetUserProblems(spec, userId);
+        logger.LogInformation($"Успешно получено {items.Count} задач");
+        
+        return Ok(mapper.Map<ICollection<GetProblemResponse>>(items));
+    }
 }
