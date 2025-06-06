@@ -9,6 +9,8 @@ import type {SortDirection} from "../interfaces/api/enums/SortDirection.ts";
 import type ProblemsSpec from "../interfaces/api/requests/ProblemsSpec.ts";
 import {useGetUserProblems} from "../hooks/api/useGetUserProblems.ts";
 import type {ProblemLevel} from "../interfaces/api/enums/ProblemLevel.ts";
+import type {GetProblemResponse} from "../interfaces/api/responses/GetProblemsResponse.ts";
+import ViewTask from "./ViewTask.tsx";
 
 export const getLevelLabel = (level: ProblemLevel): string => {
   switch (level) {
@@ -28,7 +30,9 @@ const initialFilters = {
 
 const Tasks = () => {
   const [filter, setFilter] = useState<'all' | 'mine'>('all');
-  const [view, setView] = useState<'list' | 'add'>('list');
+  const [view, setView] = useState<'list' | 'add' | 'view-task'>('list');
+  const [selectedProblem, setSelectedProblem] = useState<GetProblemResponse | null>(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
@@ -78,6 +82,9 @@ const Tasks = () => {
 
   return (
     <Wrapper>
+      {view === 'view-task' && selectedProblem && (
+        <ViewTask problem={selectedProblem} onBack={() => setView('list')} />
+      )}
       {view === 'list' && (
         <>
           <TopBar>
@@ -131,8 +138,11 @@ const Tasks = () => {
             <>
               <ProblemList>
                 {problems.map((problem, index) => (
-                  <ProblemCard key={index}>
-                    <Info>
+                  <ProblemCard key={index} onClick={() => {
+                    setSelectedProblem(problem);
+                    setView('view-task');
+                  }}>
+                  <Info>
                       <Title>{problem.name}</Title>
                       <Description>{problem.description}</Description>
                       <Level level={problem.level}>{getLevelLabel(problem.level)}</Level>
