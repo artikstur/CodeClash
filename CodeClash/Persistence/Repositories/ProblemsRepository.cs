@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using Application.Dtos;
+using Application.Dtos.Specs;
 using Application.Interfaces.Repositories;
-using Application.Specs;
 using AutoMapper;
 using Core.Enums;
 using Core.Models;
@@ -81,32 +82,31 @@ public class ProblemsRepository(WriteDbContext dbContext, IMapper mapper): IProb
         return mapper.Map<Problem>(problemEntity);
     }
 
-    public async Task<ICollection<Problem>> GetAll(ProblemsSpec spec)
+    public async Task<int> GetCount(long? userId) =>
+        await dbContext.Problems
+            .Where(x => !userId.HasValue || x.UserId == userId.Value)
+            .CountAsync();
+
+    public async Task<ManyProblemsResponse> GetAll(ProblemsSpec spec, long? userId)
     {
-        var problemEntities = await dbContext.Problems
+        var query = dbContext.Problems
             .AsNoTracking()
             .Filter(spec)
             .Sort(spec)
-            .Where(x => x.Status == ProblemStatus.Open)
+            .Where(x => !userId.HasValue || x.UserId == userId)
+            .Where(x => x.Status == ProblemStatus.Open);
+
+        var count = await query.CountAsync();
+        
+        var data = await query 
             .Page(spec)
             .ToListAsync();
 
-        return mapper.Map<ICollection<Problem>>(problemEntities);
+        var items = mapper.Map<ICollection<Problem>>(data);
+
+        return new ManyProblemsResponse { Items = items, Count = count};
     }
     
-    public async Task<ICollection<Problem>> GetUserProblems(ProblemsSpec spec, long userId)
-    {
-        var problemEntities = await dbContext.Problems
-            .AsNoTracking()
-            .Filter(spec)
-            .Sort(spec)
-            .Where(x => x.UserId == userId)
-            .Page(spec)
-            .ToListAsync();
-
-        return mapper.Map<ICollection<Problem>>(problemEntities);
-    }
-
     public async Task<bool> IsUserNotValid(long userId, long problemId)
     {
         var problemEntity = await dbContext.Problems

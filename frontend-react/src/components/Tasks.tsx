@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import type { GetProblemResponse, ProblemLevel } from '../interfaces/api/responses/GetProblemsResponse.ts';
+import React, {useState} from 'react';
 import styled from 'styled-components';
 import {FaArrowRight, FaFilter, FaPlus} from 'react-icons/fa';
 import {useCreateProblem} from "../hooks/api/useCreateProblem.ts";
@@ -9,6 +8,7 @@ import ErrorNotification from "./ErrorNotification.tsx";
 import type {SortDirection} from "../interfaces/api/enums/SortDirection.ts";
 import type ProblemsSpec from "../interfaces/api/requests/ProblemsSpec.ts";
 import {useGetUserProblems} from "../hooks/api/useGetUserProblems.ts";
+import type {ProblemLevel} from "../interfaces/api/enums/ProblemLevel.ts";
 
 export const getLevelLabel = (level: ProblemLevel): string => {
   switch (level) {
@@ -29,7 +29,7 @@ const initialFilters = {
 const Tasks = () => {
   const [filter, setFilter] = useState<'all' | 'mine'>('all');
   const [view, setView] = useState<'list' | 'add'>('list');
-
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
 
@@ -41,23 +41,40 @@ const Tasks = () => {
       ? (parseInt(appliedFilters.sortDirection) as SortDirection)
       : undefined,
     take: 25,
-    page: 1,
+    page: currentPage,
   } as ProblemsSpec;
 
-  const { data: allProblems = [], isLoading: isLoadingAll } = useGetProblems(spec, filter === 'all');
-  const { data: userProblems = [], isLoading: isLoadingMine } = useGetUserProblems(spec, filter === 'mine');
+  const { data: allProblemsData, isLoading: isLoadingAll } = useGetProblems(spec, filter === 'all');
+  const allProblems = allProblemsData?.items || [];
+  const allCount = allProblemsData?.count || 0;
+
+  const { data: userProblemsData, isLoading: isLoadingMine } = useGetUserProblems(spec, filter === 'mine');
+  const userProblems = userProblemsData?.items || [];
+  const userCount = userProblemsData?.count || 0;
 
   const problems = filter === 'mine' ? userProblems : allProblems;
+  const total = filter === 'mine' ? userCount : allCount;
   const isLoading = filter === 'mine' ? isLoadingMine : isLoadingAll;
 
   const handleApplyFilters = () => {
+    setCurrentPage(1);
     setAppliedFilters(filters);
   };
 
   const handleResetFilters = () => {
+    setCurrentPage(1);
     setFilters(initialFilters);
     setAppliedFilters(initialFilters);
   };
+
+  const handleFilterChange = (newFilter: 'all' | 'mine') => {
+    setCurrentPage(1);
+    setFilters(initialFilters);
+    setAppliedFilters(initialFilters);
+    setFilter(newFilter);
+  };
+
+  const totalPages = Math.ceil(total / spec.take);
 
   return (
     <Wrapper>
@@ -65,14 +82,12 @@ const Tasks = () => {
         <>
           <TopBar>
             <FilterButton active={filter === 'all'} onClick={() => {
-              handleResetFilters()
-              setFilter('all')
+              handleFilterChange('all')
             }}>
               Все
             </FilterButton>
             <FilterButton active={filter === 'mine'} onClick={() => {
-              handleResetFilters()
-              setFilter('mine')}
+              handleFilterChange('mine')}
             }>Мои</FilterButton>
             <AddButton onClick={() => setView('add')}>
               <FaPlus /> <span>Добавить</span>
@@ -113,18 +128,36 @@ const Tasks = () => {
           {isLoading ? (
             <p>Загрузка задач...</p>
           ) : (
-            <ProblemList>
-              {problems.map((problem, index) => (
-                <ProblemCard key={index}>
-                  <Info>
-                    <Title>{problem.name}</Title>
-                    <Description>{problem.description}</Description>
-                    <Level level={problem.level}>{getLevelLabel(problem.level)}</Level>
-                  </Info>
-                  <Action><FaArrowRight /></Action>
-                </ProblemCard>
-              ))}
-            </ProblemList>
+            <>
+              <ProblemList>
+                {problems.map((problem, index) => (
+                  <ProblemCard key={index}>
+                    <Info>
+                      <Title>{problem.name}</Title>
+                      <Description>{problem.description}</Description>
+                      <Level level={problem.level}>{getLevelLabel(problem.level)}</Level>
+                    </Info>
+                    <Action><FaArrowRight /></Action>
+                  </ProblemCard>
+                ))}
+              </ProblemList>
+
+              {totalPages > 1 && (
+                <Pagination>
+                  <PageButton disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>←</PageButton>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <PageButton
+                      key={page}
+                      active={page === currentPage}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </PageButton>
+                  ))}
+                  <PageButton disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>→</PageButton>
+                </Pagination>
+              )}
+            </>
           )}
         </>
       )}
@@ -133,6 +166,34 @@ const Tasks = () => {
     </Wrapper>
   );
 };
+
+const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+`;
+
+const PageButton = styled.button<{ active?: boolean }>`
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: ${({ active }) => (active ? '#a4161a' : '#333')};
+  color: ${({ active }) => (active ? 'white' : '#ccc')};
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+  &:hover {
+    background: #a4161acc;
+    color: white;
+  }
+  &:disabled {
+    background: #222;
+    color: #666;
+    cursor: not-allowed;
+  }
+`;
 
 
 const AddTask = ({ onBack }: { onBack: () => void }) => {

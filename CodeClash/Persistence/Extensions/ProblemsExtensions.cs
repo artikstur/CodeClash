@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using Application;
-using Application.Specs;
+using Application.Dtos.Specs;
 using Persistence.Entities;
 
 namespace Persistence.Extensions;

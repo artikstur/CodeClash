@@ -1,4 +1,5 @@
-using Application.Specs;
+using Application.Dtos;
+using Application.Dtos.Specs;
 using Core.Enums;
 using Core.Models;
 
@@ -18,9 +19,7 @@ public interface IProblemsRepository
 
     Task<Problem> Get(long problemId);
     
-    Task<ICollection<Problem>> GetAll(ProblemsSpec spec);
-    
-    Task<ICollection<Problem>> GetUserProblems(ProblemsSpec spec, long userId);
+    Task<ManyProblemsResponse> GetAll(ProblemsSpec spec, long? userId);
     
     Task<bool> IsUserNotValid(long userId, long problemId);
 }

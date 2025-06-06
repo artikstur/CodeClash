@@ -1,8 +1,8 @@
 using Api.Contracts.ProblemsController;
 using Api.Filters;
+using Application.Dtos.Specs;
 using Application.Interfaces.Repositories;
 using Application.Services;
-using Application.Specs;
 using AutoMapper;
 using Core.Enums;
 using Infrastructure.RabbitMq;
@@ -93,10 +93,10 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
     {
         logger.LogInformation($"Запрос на получение списка задач");
         
-        var items = await problemsService.GetAll(spec);
-        logger.LogInformation($"Успешно получено {items.Count} задач");
+        var response = await problemsService.GetAll(spec);
+        logger.LogInformation($"Успешно получено {response.Count} задач");
         
-        return Ok(mapper.Map<ICollection<GetProblemResponse>>(items));
+        return Ok(response);
     }
     
     [HttpGet("User")]
@@ -104,11 +104,11 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
     public async Task<IActionResult> GetManyByUser([FromQuery] ProblemsSpec spec)
     {
         var userId = (long)HttpContext.Items["userId"]!;
-        logger.LogInformation($"Запрос на получение списка задач по конкретному пользователю");
+        logger.LogInformation($"Запрос на получение списка задач");
         
-        var items = await problemsService.GetUserProblems(spec, userId);
-        logger.LogInformation($"Успешно получено {items.Count} задач");
+        var response = await problemsService.GetAll(spec, userId);
+        logger.LogInformation($"Успешно получено {response.Count} задач");
         
-        return Ok(mapper.Map<ICollection<GetProblemResponse>>(items));
+        return Ok(response);
     }
 }

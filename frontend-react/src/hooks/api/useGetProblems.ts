@@ -1,13 +1,11 @@
 import { API_BASE_URL } from "../../utils/constants.ts";
 import type ProblemsSpec from "../../interfaces/api/requests/ProblemsSpec.ts";
-import type {GetProblemResponse} from "../../interfaces/api/responses/GetProblemsResponse.ts";
 import {useQuery} from "@tanstack/react-query";
 import {toQueryString} from "./apiUtils.ts";
+import type {GetProblemsResult} from "../../interfaces/api/responses/GetProblemsResult.ts";
 
-export const getProblems = async (spec: ProblemsSpec): Promise<GetProblemResponse[]> => {
-  console.log(spec)
-  const queryString = toQueryString(spec)
-  console.log(queryString)
+export const getProblems = async (spec: ProblemsSpec): Promise<GetProblemsResult> => {
+  const queryString = toQueryString(spec);
 
   const response = await fetch(`${API_BASE_URL}/api/problems${queryString}`, {
     method: 'GET',
@@ -24,7 +22,7 @@ export const getProblems = async (spec: ProblemsSpec): Promise<GetProblemRespons
   }
 
   const text = await response.text();
-  return text ? JSON.parse(text) : [];
+  return text ? JSON.parse(text) : { items: [], count: 0 };
 };
 
 export const useGetProblems = (spec: ProblemsSpec, enabled = true) => {

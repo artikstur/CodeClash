@@ -1,5 +1,6 @@
+using Application.Dtos;
+using Application.Dtos.Specs;
 using Application.Interfaces.Repositories;
-using Application.Specs;
 using Core.Enums;
 using Core.Models;
 
@@ -37,12 +38,9 @@ public class ProblemsService(IProblemsRepository repository): BaseService
         return problem;
     }
 
-    public async Task<ICollection<Problem>> GetAll(ProblemsSpec spec) =>
-        await repository.GetAll(spec);
+    public async Task<ManyProblemsResponse> GetAll(ProblemsSpec spec, long? userId = null) =>
+        await repository.GetAll(spec, userId);
     
-    public async Task<ICollection<Problem>> GetUserProblems(ProblemsSpec spec, long userId) =>
-        await repository.GetUserProblems(spec, userId);
-
     public async Task Update(long userId, long problemId, string? name, string? description, ProblemLevel? problemLevel)
     {
         var isAuthor = await repository.IsUserNotValid(userId, problemId);

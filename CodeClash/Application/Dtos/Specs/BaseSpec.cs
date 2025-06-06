@@ -1,4 +1,4 @@
-namespace Application.Specs;
+namespace Application.Dtos.Specs;
 
 public abstract class BaseSpec
 {
