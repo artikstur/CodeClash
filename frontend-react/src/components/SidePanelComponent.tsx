@@ -41,12 +41,18 @@ const SidePanelComponent = ({
       </PanelHeader>
 
       <Label>Твой код</Label>
-      <CodeInput
-        rows={12}
-        value={code}
-        onChange={(e) => onCodeChange(e.target.value)}
-        placeholder="Напиши здесь решение..."
-      />
+      <CodeEditorWrapper>
+        <LineNumbers>
+          {code.split('\n').map((_, idx) => (
+            <span key={idx}>{idx + 1}</span>
+          ))}
+        </LineNumbers>
+        <StyledTextarea
+          value={code}
+          onChange={(e) => onCodeChange(e.target.value)}
+          placeholder="Напиши здесь решение..."
+        />
+      </CodeEditorWrapper>
 
       <Label>Выбери тест</Label>
       <Select
@@ -74,16 +80,67 @@ const Label = styled.span`
   font-size: 0.95rem;
 `;
 
-const CodeInput = styled.textarea`
-  background: #1a1a1a;
-  border: 1px solid #444;
-  color: white;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.95rem;
+const CodeEditorWrapper = styled.div`
+  display: flex;
+  background: #1e1e1e;
+  border: 1px solid #333;
   border-radius: 8px;
-  padding: 0.75rem;
-  resize: vertical;
+  overflow: hidden;
+  font-family: 'Fira Code', 'Source Code Pro', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: inset 0 0 5px #000;
+  max-height: 400px;
 `;
+
+const LineNumbers = styled.div`
+  background: #1a1a1a;
+  color: #555;
+  padding: 1rem 0.5rem;
+  text-align: right;
+  user-select: none;
+  min-width: 40px;
+  border-right: 1px solid #333;
+  line-height: 1.5;
+  font-size: 14px;
+
+  span {
+    display: block;
+  }
+`;
+
+const StyledTextarea = styled.textarea`
+  flex: 1;
+  padding: 1rem;
+  background: transparent;
+  border: none;
+  color: #d4d4d4;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  overflow: auto;
+
+  &::selection {
+    background: rgba(214, 40, 40, 0.6);
+    color: white;
+  }
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #666;
+  }
+`;
+
 
 const Select = styled.select`
   background: #222;
