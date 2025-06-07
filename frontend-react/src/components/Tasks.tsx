@@ -48,17 +48,29 @@ const Tasks = () => {
     page: currentPage,
   } as ProblemsSpec;
 
-  const { data: allProblemsData, isLoading: isLoadingAll } = useGetProblems(spec, filter === 'all');
-  const allProblems = allProblemsData?.items || [];
-  const allCount = allProblemsData?.count || 0;
+  // const { data: allProblemsData, isLoading: isLoadingAll } = useGetProblems(spec, filter === 'all');
+  // const allProblems = allProblemsData?.items || [];
+  // const allCount = allProblemsData?.count || 0;
+  //
+  // const { data: userProblemsData, isLoading: isLoadingMine } = useGetUserProblems(spec, filter === 'mine');
+  // const userProblems = userProblemsData?.items || [];
+  // const userCount = userProblemsData?.count || 0;
 
-  const { data: userProblemsData, isLoading: isLoadingMine } = useGetUserProblems(spec, filter === 'mine');
-  const userProblems = userProblemsData?.items || [];
-  const userCount = userProblemsData?.count || 0;
+  // const problems = filter === 'mine' ? userProblems : allProblems;
+  // const total = filter === 'mine' ? userCount : allCount;
+  // const isLoading = filter === 'mine' ? isLoadingMine : isLoadingAll;
 
-  const problems = filter === 'mine' ? userProblems : allProblems;
-  const total = filter === 'mine' ? userCount : allCount;
-  const isLoading = filter === 'mine' ? isLoadingMine : isLoadingAll;
+  const total = 15;
+  const isLoading = false;
+
+  const problems: GetProblemResponse[] = [
+    {
+      id: 1,
+      name: "Simple Math Problem",
+      description: "Solve the equation: 2 + 2 = ?",
+      level: 1,
+    },
+  ];
 
   const handleApplyFilters = () => {
     setCurrentPage(1);
@@ -83,7 +95,10 @@ const Tasks = () => {
   return (
     <Wrapper>
       {view === 'view-task' && selectedProblem && (
-        <ViewTask problem={selectedProblem} onBack={() => setView('list')} />
+        <ViewTask
+          isUser={true}
+          problem={selectedProblem}
+          onBack={() => setView('list')} />
       )}
       {view === 'list' && (
         <>
