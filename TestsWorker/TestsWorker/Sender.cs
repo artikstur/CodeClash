@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using RabbitMQ.Client;
 using TestsWorker.Dtos;
 
@@ -8,7 +9,8 @@ public static class Sender
 {
     public static async Task SendMessage(SendMessageDto sendMessageDto)
     {
-        var messageBodyBytes = Encoding.UTF8.GetBytes(sendMessageDto.Message);
+        var data = JsonSerializer.Serialize(sendMessageDto.Message);
+        var messageBodyBytes = Encoding.UTF8.GetBytes(data);
         var props = new BasicProperties
         {
             ContentType = "application/json"

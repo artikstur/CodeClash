@@ -1,11 +1,14 @@
 import type { GetProblemResponse } from "../interfaces/api/responses/GetProblemsResponse.ts";
 import styled from "styled-components";
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import {FaArrowLeft, FaCode, FaPlus, FaTrash} from "react-icons/fa";
 import {MdClose, MdOutlineModeEdit} from 'react-icons/md';
 import type { TestCase } from "../interfaces/api/core/TestCase.ts";
 import {useResizablePanel} from "../hooks/useResizablePanel.ts";
 import SidePanelComponent from "./SidePanelComponent.tsx";
+import {usePostSolution} from "../hooks/api/usePostSolution.ts";
+import {useGetTestCases} from "../hooks/api/useGetTestCases.ts";
+import {useSolutionPolling} from "../hooks/api/useSolutionPolling.ts";
 
 const testCases: TestCase[] = [
   { id: 1, input: "2 3", output: "5", isHidden: false },
@@ -16,9 +19,12 @@ const testCases: TestCase[] = [
 const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; onBack: () => void, isUser: boolean }) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [code, setCode] = useState("");
-  const [selectedTestId, setSelectedTestId] = useState(testCases.find(tc => !tc.isHidden)?.id ?? 0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+  const { data: testCases = [], isLoading: isLoadingTests } = useGetTestCases(problem.id);
   const visibleTests = testCases.filter(t => !t.isHidden);
+  const [selectedTestId, setSelectedTestId] = useState<number | null>(null);
+
   const { width: panelWidth, startResizing } = useResizablePanel();
   const [isEditing, setIsEditing] = useState(false);
   const [editableProblem, setEditableProblem] = useState(problem);
@@ -26,13 +32,32 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
   const [isAddTestModalOpen, setIsAddTestModalOpen] = useState(false);
   const [newTestInput, setNewTestInput] = useState("");
   const [newTestOutput, setNewTestOutput] = useState("");
+  const { mutate: sendSolution, isLoading, isSuccess, isError, error } = usePostSolution();
+  const [solutionId, setSolutionId] = useState<number | null>(null);
+
+  const {
+    status: solutionStatus,
+    isPending: isPolling,
+    isError: isPollError,
+  } = useSolutionPolling(solutionId);
+
+  useEffect(() => {
+    if (visibleTests.length > 0 && selectedTestId === null) {
+      setSelectedTestId(visibleTests[0].id);
+    }
+  }, [visibleTests, selectedTestId]);
 
   const handleRunTest = () => {
-    console.log("Отправка теста:", {
-      code,
-      problemId: problem.id,
-      testCaseId: selectedTestId,
-    });
+    if (!selectedTestId) return;
+
+    sendSolution(
+      { testCaseId: selectedTestId, code },
+      {
+        onSuccess: (returnedSolutionId) => {
+          setSolutionId(returnedSolutionId);
+        },
+      }
+    );
   };
 
   const handleAddTest = () => {
@@ -147,7 +172,7 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
             </ButtonRow>
           )}
           <TestCaseTabs>
-            {editableTests.map((test, index) => (
+            {editableTests?.map((test, index) => (
               <Tab key={test.id} active={selectedTab === index}>
                 <TabContent>
                   <TabName onClick={() => setSelectedTab(index)}>
@@ -178,11 +203,11 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
           <TestCaseView>
             <TestCaseBlock>
               <Label>Вход</Label>
-              <CodeBlock>{visibleTests[selectedTab].input}</CodeBlock>
+              <CodeBlock>{visibleTests[selectedTab]?.input}</CodeBlock>
             </TestCaseBlock>
             <TestCaseBlock>
               <Label>Ожидаемый выход</Label>
-              <CodeBlock>{visibleTests[selectedTab].output}</CodeBlock>
+              <CodeBlock>{visibleTests[selectedTab]?.output}</CodeBlock>
             </TestCaseBlock>
           </TestCaseView>
         </LeftPanel>
@@ -260,19 +285,6 @@ const EditIcon = styled.button`
     &:hover {
         color: white;
     }
-`;
-
-const SaveButton = styled.button`
-  background: linear-gradient(90deg, #198754, #157347);
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 10px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-  width: 150px;
-  margin-top: 0.8rem;
 `;
 
 const Wrapper = styled.div`

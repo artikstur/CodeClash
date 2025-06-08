@@ -48,29 +48,29 @@ const Tasks = () => {
     page: currentPage,
   } as ProblemsSpec;
 
-  // const { data: allProblemsData, isLoading: isLoadingAll } = useGetProblems(spec, filter === 'all');
-  // const allProblems = allProblemsData?.items || [];
-  // const allCount = allProblemsData?.count || 0;
+  const { data: allProblemsData, isLoading: isLoadingAll } = useGetProblems(spec, filter === 'all');
+  const allProblems = allProblemsData?.items || [];
+  const allCount = allProblemsData?.count || 0;
+
+  const { data: userProblemsData, isLoading: isLoadingMine } = useGetUserProblems(spec, filter === 'mine');
+  const userProblems = userProblemsData?.items || [];
+  const userCount = userProblemsData?.count || 0;
+
+  const problems = filter === 'mine' ? userProblems : allProblems;
+  const total = filter === 'mine' ? userCount : allCount;
+  const isLoading = filter === 'mine' ? isLoadingMine : isLoadingAll;
+
+  // const total = 15;
+  // const isLoading = false;
   //
-  // const { data: userProblemsData, isLoading: isLoadingMine } = useGetUserProblems(spec, filter === 'mine');
-  // const userProblems = userProblemsData?.items || [];
-  // const userCount = userProblemsData?.count || 0;
-
-  // const problems = filter === 'mine' ? userProblems : allProblems;
-  // const total = filter === 'mine' ? userCount : allCount;
-  // const isLoading = filter === 'mine' ? isLoadingMine : isLoadingAll;
-
-  const total = 15;
-  const isLoading = false;
-
-  const problems: GetProblemResponse[] = [
-    {
-      id: 1,
-      name: "Simple Math Problem",
-      description: "Solve the equation: 2 + 2 = ?",
-      level: 1,
-    },
-  ];
+  // const problems: GetProblemResponse[] = [
+  //   {
+  //     id: 1,
+  //     name: "Simple Math Problem",
+  //     description: "Solve the equation: 2 + 2 = ?",
+  //     level: 1,
+  //   },
+  // ];
 
   const handleApplyFilters = () => {
     setCurrentPage(1);

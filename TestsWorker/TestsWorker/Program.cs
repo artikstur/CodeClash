@@ -5,7 +5,6 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Serilog;
 using TestsWorker.Dtos;
-using TestsWorker.Enums;
 
 namespace TestsWorker;
 
@@ -62,18 +61,15 @@ public static class Program
                 {
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
+                    var dto = JsonSerializer.Deserialize<TestCodeDto>(message);
+                    
                     logger.LogInformation("{Guid}: Получено сообщение", guid);
                     
-                    var executedTestResult = new ExecutionResult
-                    {
-                        Output = "this is program output",
-                        TestWorkerStatus = TestWorkerStatus.Ok,
-                    };
-
-                    var executedTestMessage = JsonSerializer.Serialize(executedTestResult);
+                    var executedTestResult = await CodeExecutor.ExecuteAsync(dto.Code, dto.SolutionId,TimeSpan.FromSeconds(5));
+                    
                     var sendMessageDto = new SendMessageDto
                     {   
-                        Message = executedTestMessage,
+                        Message = executedTestResult,
                         QueueName = senderQueueName,
                         Channel = channel,
                     };

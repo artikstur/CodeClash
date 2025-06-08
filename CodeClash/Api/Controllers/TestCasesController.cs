@@ -4,6 +4,7 @@ using Api.Filters;
 using Application.Interfaces.Repositories;
 using Application.Services;
 using AutoMapper;
+using Core.Enums;
 using Infrastructure.RabbitMq.Contacts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,22 +15,26 @@ namespace Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class TestCasesController(TestCasesService testCasesService, IMapper mapper, ILogger<TestCasesController> logger,
-    IRabbitMqSender rabbitMqSender, SolutionsService solutionsService) : BaseController
+public class TestCasesController(TestCasesService testCasesService, IMapper mapper, ILogger<TestCasesController> logger, SolutionsService solutionsService) : BaseController
 {
-    [HttpPost("${testId:long}/AddNewForOneTask")]
+    [HttpPost("{testId:long}/AddNewForOneTask")]
     [UserIdFilter]
-    [EntityExistenceFilter(typeof(TestCaseEntity), "testId")]
+    // [EntityExistenceFilter(typeof(TestCaseEntity), "testId")]
     public async Task<IActionResult> Solve(long testId, [FromBody] SolveRequest request)
     {
         var userId = (long)HttpContext.Items["userId"]!;
-        var queueName = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "my_queue";
-
-        await solutionsService.AddSolutionForTestAsync(userId, testId);
-        await rabbitMqSender.SendMessage(request.Code, queueName);
+        var solutionId = await solutionsService.AddSolutionForTestAsync(userId, testId, request.Code);
         logger.LogInformation($"Успешно добавлено новое решение в БД для {testId}");
         
-        return Ok();
+        return Ok(new {solutionId});
+    }
+    
+    [HttpGet("solutionStatus/{solutionId:long}")]
+    public async Task<IActionResult> CheckSolutionStatus(long solutionId)
+    {
+        var status = await solutionsService.CheckSolutionStatus(solutionId);
+
+        return Ok(new {status = status == SolutionStatus.Success});
     }
     
     [HttpPost]
@@ -60,12 +65,12 @@ public class TestCasesController(TestCasesService testCasesService, IMapper mapp
         return Ok(mapper.Map<GetTestCaseResponse>(testCase));
     }
     
-    [HttpGet("${problemId:long}")]
+    [HttpGet("{problemId:long}")]
     [UserIdFilter]
-    [EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
+    //[EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
     public async Task<IActionResult> GetByProblem(long problemId)
     {
-        var userId = (long)HttpContext.Items["userId"]!;
+            var userId = (long)HttpContext.Items["userId"]!;
         logger.LogInformation($"Пользователь {userId} запрашивает все тест-кейсы для задачи {problemId}");
 
         var testCases = await testCasesService.GetByProblemId(userId, problemId);

@@ -8,5 +8,5 @@ public class SendMessageDto
 
     public IChannel Channel { get; set; }
     
-    public string Message { get; set; }
+    public ExecutionResult Message { get; set; }
 }

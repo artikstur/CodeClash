@@ -9,7 +9,7 @@ namespace Persistence.Repositories;
 
 public class SolutionsRepository(WriteDbContext dbContext, IMapper mapper): ISolutionsRepository
 {
-    public async Task AddNew(long userId, long testCaseId)
+    public async Task<long> AddNew(long userId, long testCaseId)
     {
         var solution = new SolutionEntity
         {
@@ -21,6 +21,8 @@ public class SolutionsRepository(WriteDbContext dbContext, IMapper mapper): ISol
         dbContext.Solutions.Add(solution);
 
         await dbContext.SaveChangesAsync();
+
+        return solution.Id;
     }
 
     public async Task<Solution> Get(long solutionId)
