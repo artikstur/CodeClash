@@ -65,7 +65,8 @@ public static class Program
                     
                     logger.LogInformation("{Guid}: Получено сообщение", guid);
                     
-                    var executedTestResult = await CodeExecutor.ExecuteAsync(dto.Code, dto.SolutionId,TimeSpan.FromSeconds(5));
+                    var executedTestResult = await CodeExecutor.ExecuteAsync(dto.Code,
+                        dto.SolutionId,TimeSpan.FromSeconds(5), dto.Input);
                     
                     var sendMessageDto = new SendMessageDto
                     {   

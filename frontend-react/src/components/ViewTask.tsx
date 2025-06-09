@@ -12,12 +12,6 @@ import {useSolutionPolling} from "../hooks/api/useSolutionPolling.ts";
 import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import ErrorNotification from "./ErrorNotification.tsx";
 
-const testCases: TestCase[] = [
-  { id: 1, input: "2 3", output: "5", isHidden: false },
-  { id: 2, input: "10 20", output: "30", isHidden: false },
-  { id: 3, input: "100 200", output: "300", isHidden: true },
-];
-
 const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; onBack: () => void, isUser: boolean }) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [code, setCode] = useState("");
@@ -214,7 +208,7 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
           <TestCaseView>
             <TestCaseBlock>
               <Label>Вход</Label>
-              <CodeBlock>{visibleTests[selectedTab]?.input}</CodeBlock>
+              <CodeBlock>{visibleTests[selectedTab]?.input.replace('\\n', " ")}</CodeBlock>
             </TestCaseBlock>
             <TestCaseBlock>
               <Label>Ожидаемый выход</Label>

@@ -9,14 +9,17 @@ namespace TestsWorker;
 
 public static class CodeExecutor
 {
-    public static async Task<ExecutionResult> ExecuteAsync(string code, long testCaseId, TimeSpan timeout)
+    public static async Task<ExecutionResult> ExecuteAsync(string code, long testCaseId, TimeSpan timeout,
+        string input = "")
     {
         var result = new ExecutionResult
         {
             SolutionId = testCaseId
         };
+
         try
         {
+            input = input.Replace("\\n", "\n");
             var syntaxTree = CSharpSyntaxTree.ParseText(code);
 
             var assemblyName = Path.GetRandomFileName();
@@ -63,6 +66,9 @@ public static class CodeExecutor
 
             var output = new StringWriter();
             Console.SetOut(output);
+
+            var inputReader = new StringReader(input);
+            Console.SetIn(inputReader);
 
             var cts = new CancellationTokenSource(timeout);
             var task = Task.Run(() =>
