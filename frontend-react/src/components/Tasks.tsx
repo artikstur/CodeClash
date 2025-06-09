@@ -59,18 +59,7 @@ const Tasks = () => {
   const problems = filter === 'mine' ? userProblems : allProblems;
   const total = filter === 'mine' ? userCount : allCount;
   const isLoading = filter === 'mine' ? isLoadingMine : isLoadingAll;
-
-  // const total = 15;
-  // const isLoading = false;
-  //
-  // const problems: GetProblemResponse[] = [
-  //   {
-  //     id: 1,
-  //     name: "Simple Math Problem",
-  //     description: "Solve the equation: 2 + 2 = ?",
-  //     level: 1,
-  //   },
-  // ];
+  const isUserProblem = userProblems?.some(p => p.id === selectedProblem?.id);
 
   const handleApplyFilters = () => {
     setCurrentPage(1);
@@ -96,9 +85,10 @@ const Tasks = () => {
     <Wrapper>
       {view === 'view-task' && selectedProblem && (
         <ViewTask
-          isUser={true}
+          isUser={userProblems.some(p => p.id === selectedProblem.id)}
           problem={selectedProblem}
-          onBack={() => setView('list')} />
+          onBack={() => setView('list')}
+        />
       )}
       {view === 'list' && (
         <>

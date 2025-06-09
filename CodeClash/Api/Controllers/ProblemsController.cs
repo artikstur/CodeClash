@@ -32,7 +32,7 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
         return Ok();
     }
 
-    [HttpGet("${problemId:long}")]
+    [HttpGet("{problemId:long}")]
     [UserIdFilter]
     [EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
     public async Task<IActionResult> Get(long problemId)
@@ -46,7 +46,7 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
         return Ok(mapper.Map<GetProblemResponse>(problem));
     }
 
-    [HttpPut("${problemId:long}")]
+    [HttpPut("{problemId:long}")]
     [UserIdFilter]
     [EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
     public async Task<IActionResult> Update(long problemId, [FromBody] UpdateProblemRequest request)
@@ -60,7 +60,7 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
         return Ok();
     }
 
-    [HttpDelete("${problemId:long}")]
+    [HttpDelete("{problemId:long}")]
     [UserIdFilter]
     [EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
     public async Task<IActionResult> Remove(long problemId)
@@ -74,7 +74,7 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
         return Ok();
     }
 
-    [HttpPost("${problemId:long}/SetStatus")]
+    [HttpPost("{problemId:long}/SetStatus")]
     [UserIdFilter]
     [EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
     public async Task<IActionResult> SetStatus(long problemId, [FromQuery] ProblemStatus problemStatus)

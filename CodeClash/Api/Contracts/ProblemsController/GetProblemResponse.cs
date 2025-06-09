@@ -1,8 +1,9 @@
 using Core.Enums;
+using Core.Utils;
 
 namespace Api.Contracts.ProblemsController;
 
-public class GetProblemResponse
+public class GetProblemResponse: LongIdBase
 {
     public string Name { get; set; }
     

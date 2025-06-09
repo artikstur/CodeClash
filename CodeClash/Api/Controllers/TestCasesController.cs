@@ -50,7 +50,7 @@ public class TestCasesController(TestCasesService testCasesService, IMapper mapp
         return Ok();
     }
 
-    [HttpGet("${testId:long}/{problemId:long}")]
+    [HttpGet("{testId:long}/{problemId:long}")]
     [UserIdFilter]
     [EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
     [EntityExistenceFilter(typeof(TestCaseEntity), "testId")]
@@ -93,7 +93,7 @@ public class TestCasesController(TestCasesService testCasesService, IMapper mapp
         return Ok();
     }
     
-    [HttpDelete("${testId:long}/{problemId:long}")]
+    [HttpDelete("{testId:long}/{problemId:long}")]
     [UserIdFilter]
     [EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
     [EntityExistenceFilter(typeof(TestCaseEntity), "testId")]

@@ -11,6 +11,10 @@ import {useGetTestCases} from "../hooks/api/useGetTestCases.ts";
 import {useSolutionPolling} from "../hooks/api/useSolutionPolling.ts";
 import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import ErrorNotification from "./ErrorNotification.tsx";
+import {useUpdateProblem} from "../hooks/api/useUpdateProblem.ts";
+import {useQueryClient} from "@tanstack/react-query";
+import {useGetProblemById} from "../hooks/api/useGetProblemById.ts";
+import {useDeleteTestCase} from "../hooks/api/useDeleteTestCase.ts";
 
 const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; onBack: () => void, isUser: boolean }) => {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -83,6 +87,39 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
     console.log("Я отправил решение");
   };
 
+
+  const { mutate: updateProblem } = useUpdateProblem();
+  const { data: updatedProblem, isLoading: isProblemLoading } = useGetProblemById(problem.id);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (updatedProblem) {
+      setEditableProblem(updatedProblem);
+    }
+  }, [updatedProblem]);
+  const handleSave = () => {
+    setIsEditing(false);
+
+    const update = {
+      name: editableProblem.name,
+      description: editableProblem.description,
+      problemLevel: editableProblem.level,
+    };
+
+    updateProblem(
+      { problemId: problem.id, update },
+      {
+        onSuccess: () => {
+          problem.name = update.name;
+          problem.level = update.problemLevel;
+          queryClient.invalidateQueries({ queryKey: ["problemId", problem.id] });
+        },
+      }
+    );
+  };
+  const { mutate: deleteTest } = useDeleteTestCase();
+
+
   return (
     <Wrapper>
       <TopBar>
@@ -153,16 +190,7 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
           </Section>
           {isEditing && (
             <ButtonRow>
-              <ActionButton onClick={() => {
-                setIsEditing(false);
-                const updated: GetProblemResponse = {
-                  id: problem.id,
-                  name: editableProblem.name,
-                  description: editableProblem.description,
-                  level: editableProblem.level
-                };
-                console.log("Обновлённая задача:", updated);
-              }}>
+              <ActionButton onClick={handleSave}>
                 Сохранить
               </ActionButton>
               <ActionButton
@@ -188,12 +216,21 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
                       title="Удалить пример"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log("🗑️ Удалён тест с id:", test.id);
-                        setEditableTests(editableTests.filter((t) => t.id !== test.id));
-                        if (selectedTab >= editableTests.length - 1) setSelectedTab(0);
+                        deleteTest(
+                          { testId: test.id, problemId: problem.id },
+                          {
+                            onSuccess: () => {
+                              setEditableTests((prev) => prev.filter((t) => t.id !== test.id));
+                              if (selectedTab >= editableTests.length - 1) setSelectedTab(0);
+                            },
+                            onError: (error) => {
+                              console.error("Ошибка при удалении теста:", error);
+                            },
+                          }
+                        );
                       }}
                     >
-                      <FaTrash size={13} color='white'/>
+                      <FaTrash size={13} color="white" />
                     </DeleteIcon>
                   )}
                 </TabContent>
