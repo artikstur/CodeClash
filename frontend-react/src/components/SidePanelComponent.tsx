@@ -15,21 +15,22 @@ type Props = {
   onSubmitSolution: () => void;
   onClose: () => void;
   onStartResize: (e: React.MouseEvent) => void;
+  isPolling: boolean;
 };
 
 const SidePanelComponent = ({
-                              open,
-                              width,
-                              code,
-                              onCodeChange,
-                              selectedTestId,
-                              onSelectTest,
-                              visibleTests,
-                              onRunTest,
-                              onSubmitSolution,
-                              onClose,
-                              onStartResize,
-                            }: Props) => {
+  open,
+  width,
+  code,
+  onCodeChange,
+  selectedTestId,
+  onSelectTest,
+  visibleTests,
+  onRunTest,
+  onSubmitSolution,
+  onClose,
+  onStartResize,
+  isPolling}: Props) => {
   return (
     <SidePanel open={open} width={width}>
       <ResizeHandle onMouseDown={onStartResize} />
@@ -67,12 +68,32 @@ const SidePanelComponent = ({
       </Select>
 
       <ButtonRow>
-        <ActionButton onClick={onRunTest}>Отправить тест</ActionButton>
-        <ActionButton onClick={onSubmitSolution}>Отправить решение</ActionButton>
+        <ActionButton onClick={onRunTest} disabled={isPolling}>
+          {isPolling ? <Spinner /> : "Отправить тест"}
+        </ActionButton>
+        <ActionButton onClick={onSubmitSolution} disabled={isPolling}>
+          {isPolling ? <Spinner /> : "Отправить решение"}
+        </ActionButton>
       </ButtonRow>
     </SidePanel>
   );
 };
+
+const Spinner = styled.div`
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin: auto;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 const Label = styled.span`
   color: #ccc;

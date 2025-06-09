@@ -34,7 +34,7 @@ public class TestCasesController(TestCasesService testCasesService, IMapper mapp
     {
         var status = await solutionsService.CheckSolutionStatus(solutionId);
 
-        return Ok(new {status = status == SolutionStatus.Success});
+        return Ok(new {status});
     }
     
     [HttpPost]

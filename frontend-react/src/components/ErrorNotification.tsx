@@ -28,14 +28,22 @@ type ErrorNotificationProps = {
   show: boolean;
   message: string;
   onClose: () => void;
+  title?: string | null;
+  isError?: boolean;
 };
 
-const ErrorNotification: React.FC<ErrorNotificationProps> = ({ show, message, onClose }) => {
+const ErrorNotification: React.FC<ErrorNotificationProps> = ({
+                                                               show,
+                                                               message,
+                                                               onClose,
+                                                               title,
+                                                               isError = true
+                                                             }) => {
   return (
-    <Container show={show} onAnimationEnd={() => !show && onClose()}>
+    <Container show={show} isError={isError} onAnimationEnd={() => !show && onClose()}>
       <Content>
         <FaTimes className="close-icon" onClick={onClose} />
-        <Title>Ошибка</Title>
+        {title && <Title isError={isError}>{title}</Title>}
         <Message>{message}</Message>
       </Content>
     </Container>
@@ -44,12 +52,12 @@ const ErrorNotification: React.FC<ErrorNotificationProps> = ({ show, message, on
 
 export default ErrorNotification;
 
-const Container = styled.div<{ show: boolean }>`
+const Container = styled.div<{ show: boolean; isError: boolean }>`
   position: fixed;
   top: 20px;
   right: 20px;
   background: rgba(30, 30, 30, 0.95);
-  border-left: 4px solid #d62828;
+  border-left: 4px solid ${({ isError }) => (isError ? '#d62828' : '#2ecc71')};
   border-radius: 4px;
   padding: 1rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -57,6 +65,12 @@ const Container = styled.div<{ show: boolean }>`
   animation: ${({ show }) => (show ? slideIn : slideOut)} 0.3s forwards;
   max-width: 300px;
   backdrop-filter: blur(5px);
+`;
+
+const Title = styled.h4<{ isError: boolean }>`
+  margin: 0 0 8px 0;
+  color: ${({ isError }) => (isError ? '#ff6b6b' : '#2ecc71')};
+  font-size: 1.1rem;
 `;
 
 const Content = styled.div`
@@ -78,12 +92,6 @@ const Content = styled.div`
       background: rgba(255, 0, 0, 0.5);
     }
   }
-`;
-
-const Title = styled.h4`
-  margin: 0 0 8px 0;
-  color: #ff6b6b;
-  font-size: 1.1rem;
 `;
 
 const Message = styled.p`

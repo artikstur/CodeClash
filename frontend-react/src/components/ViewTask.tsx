@@ -9,6 +9,8 @@ import SidePanelComponent from "./SidePanelComponent.tsx";
 import {usePostSolution} from "../hooks/api/usePostSolution.ts";
 import {useGetTestCases} from "../hooks/api/useGetTestCases.ts";
 import {useSolutionPolling} from "../hooks/api/useSolutionPolling.ts";
+import {useErrorNotification} from "../hooks/useErrorNotification.ts";
+import ErrorNotification from "./ErrorNotification.tsx";
 
 const testCases: TestCase[] = [
   { id: 1, input: "2 3", output: "5", isHidden: false },
@@ -39,6 +41,8 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
     status: solutionStatus,
     isPending: isPolling,
     isError: isPollError,
+    isTestSuccess,
+    isTestFailed,
   } = useSolutionPolling(solutionId);
 
   useEffect(() => {
@@ -73,6 +77,13 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
     setNewTestOutput("");
     setIsAddTestModalOpen(false);
   };
+
+  const {
+    showError,
+    message: errorMessage,
+    show: showNotification,
+    close: closeNotification,
+  } = useErrorNotification();
 
   const handleSubmitSolution = () => {
     console.log("Я отправил решение");
@@ -230,7 +241,25 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
         onSubmitSolution={handleSubmitSolution}
         onClose={() => setIsPanelOpen(false)}
         onStartResize={startResizing}
+        isPolling={isPolling}
       />
+      {isTestFailed && (
+        <ErrorNotification
+          show={isTestFailed}
+          message={"Решение не прошло тест"}
+          onClose={closeNotification}
+          title={'Ошибка'}
+        />
+      )}
+      {isTestSuccess && (
+        <ErrorNotification
+          show={isTestSuccess}
+          message={"Тест успешно пройден"}
+          onClose={closeNotification}
+          title={'Успешно'}
+          isError={false}
+        />
+      )}
       {isAddTestModalOpen && (
         <ModalOverlay>
           <Modal>

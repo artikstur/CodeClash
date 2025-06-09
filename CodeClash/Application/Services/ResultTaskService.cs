@@ -12,11 +12,20 @@ public class ResultTaskService(ILogger<ResultTaskService> logger, ISolutionsRepo
     public async Task UpdateTaskStatusAsync(ExecutionResult result)
     {
         logger.LogInformation("Задача отработала на одной из реплик. Происходит обработка результатов");
-
+        
         switch (result.TestWorkerStatus)
         {
             case TestWorkerStatus.Ok:
-                await solutionsRepository.UpdateStatus(result.SolutionId, SolutionStatus.Success);
+                var neededOutPut = await solutionsRepository.GetNeededTestCaseOutput(result.SolutionId);
+                if (string.Equals(neededOutPut.Trim(), result.Output?.Trim(), StringComparison.Ordinal))
+                {
+                    await solutionsRepository.UpdateStatus(result.SolutionId, SolutionStatus.Success);
+                }
+                else
+                {
+                    await solutionsRepository.UpdateStatus(result.SolutionId, SolutionStatus.Failed);
+                }
+                
                 break;
             case TestWorkerStatus.Error:
                 await solutionsRepository.UpdateStatus(result.SolutionId, SolutionStatus.Failed);
