@@ -189,6 +189,7 @@ const ActionButton = styled.button`
   cursor: pointer;
   transition: 0.2s;
   width: 150px;
+  height: 60px;
 `;
 
 const SidePanel = styled.div<{ open: boolean; width: number }>`

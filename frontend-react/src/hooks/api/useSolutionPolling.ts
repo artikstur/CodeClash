@@ -37,7 +37,7 @@ export const useSolutionPolling = (solutionId: number | null) => {
 
   return {
     status: data,
-    isPending: enabled && (isFetching || isLoading),
+    isPending: data === 1,
     isError,
     isTestSuccess: data === 3,
     isTestFailed: data === 2,
