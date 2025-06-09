@@ -5,7 +5,7 @@ namespace Application.Interfaces.Repositories;
 
 public interface ISolutionsRepository
 {
-    Task<long> AddNew(long userId, long testCaseId);
+    Task<long> AddNew(long userId, long testCaseId, long? taskSolutionId = null);
     
     Task<Solution> Get(long solutionId);
 

@@ -52,6 +52,7 @@ services.AddValidators();
 services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 services.AddScoped<IDbExtensions, DbExtensions>();
 services.AddScoped<IRabbitMqSender, RabbitMqSender>();
+services.AddScoped<ITaskSolutionRepository, TaskSolutionRepository>();
 services.AddHangfire(config =>
     config.UsePostgreSqlStorage(options =>
     {

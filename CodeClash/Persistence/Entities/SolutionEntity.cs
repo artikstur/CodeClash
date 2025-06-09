@@ -20,4 +20,8 @@ public class SolutionEntity: LongIdBase
     public long TestCaseId { get; set; }
     
     public TestCaseEntity TestCase { get; set; }
+
+    public long? TaskSolutionEntityId { get; set; }
+    
+    public TaskSolutionEntity? TaskSolutionEntity { get; set; }
 }

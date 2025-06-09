@@ -21,5 +21,7 @@ public interface IProblemsRepository
     
     Task<ManyProblemsResponse> GetAll(ProblemsSpec spec, long? userId);
     
+    Task<List<long>> GetAllTestIds(long problemId);
+    
     Task<bool> IsUserNotValid(long userId, long problemId);
 }

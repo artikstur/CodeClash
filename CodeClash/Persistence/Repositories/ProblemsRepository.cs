@@ -106,7 +106,15 @@ public class ProblemsRepository(WriteDbContext dbContext, IMapper mapper): IProb
 
         return new ManyProblemsResponse { Items = items, Count = count};
     }
+
+    public async Task<List<long>> GetAllTestIds(long problemId) =>
+       await dbContext.Problems
+            .Where(x => x.Id == problemId)
+            .SelectMany(x => x.TestCases)
+            .Select(x => x.Id)
+            .ToListAsync();
     
+
     public async Task<bool> IsUserNotValid(long userId, long problemId)
     {
         var problemEntity = await dbContext.Problems

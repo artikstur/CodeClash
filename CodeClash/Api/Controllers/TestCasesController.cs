@@ -1,11 +1,8 @@
 using Api.Contracts.ProblemsController;
 using Api.Contracts.TestCasesController;
 using Api.Filters;
-using Application.Interfaces.Repositories;
 using Application.Services;
 using AutoMapper;
-using Core.Enums;
-using Infrastructure.RabbitMq.Contacts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistence.Entities;
@@ -20,7 +17,7 @@ public class TestCasesController(TestCasesService testCasesService, IMapper mapp
     [HttpPost("{testId:long}/AddNewForOneTask")]
     [UserIdFilter]
     // [EntityExistenceFilter(typeof(TestCaseEntity), "testId")]
-    public async Task<IActionResult> Solve(long testId, [FromBody] SolveRequest request)
+    public async Task<IActionResult> SolveTest(long testId, [FromBody] SolveRequest request)
     {
         var userId = (long)HttpContext.Items["userId"]!;
         var solutionId = await solutionsService.AddSolutionForTestAsync(userId, testId, request.Code);

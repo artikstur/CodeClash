@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Persistence;
@@ -11,9 +12,11 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(WriteDbContext))]
-    partial class WriteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250609182929_Add_TaskSolutions")]
+    partial class Add_TaskSolutions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,7 +75,7 @@ namespace Persistence.Migrations
                     b.Property<int>("SolutionStatus")
                         .HasColumnType("integer");
 
-                    b.Property<long?>("TaskSolutionEntityId")
+                    b.Property<long?>("TaskSolutionId")
                         .HasColumnType("bigint");
 
                     b.Property<long>("TestCaseId")
@@ -86,7 +89,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TaskSolutionEntityId");
+                    b.HasIndex("TaskSolutionId");
 
                     b.HasIndex("TestCaseId");
 
@@ -95,13 +98,17 @@ namespace Persistence.Migrations
                     b.ToTable("Solutions");
                 });
 
-            modelBuilder.Entity("Persistence.Entities.TaskSolutionEntity", b =>
+            modelBuilder.Entity("Persistence.Entities.TaskSolution", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long[]>("SolutionIds")
+                        .IsRequired()
+                        .HasColumnType("bigint[]");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -183,9 +190,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Persistence.Entities.SolutionEntity", b =>
                 {
-                    b.HasOne("Persistence.Entities.TaskSolutionEntity", "TaskSolutionEntity")
+                    b.HasOne("Persistence.Entities.TaskSolution", null)
                         .WithMany("Solutions")
-                        .HasForeignKey("TaskSolutionEntityId");
+                        .HasForeignKey("TaskSolutionId");
 
                     b.HasOne("Persistence.Entities.TestCaseEntity", "TestCase")
                         .WithMany()
@@ -199,14 +206,12 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("TaskSolutionEntity");
-
                     b.Navigation("TestCase");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Persistence.Entities.TaskSolutionEntity", b =>
+            modelBuilder.Entity("Persistence.Entities.TaskSolution", b =>
                 {
                     b.HasOne("Persistence.Entities.UserEntity", "User")
                         .WithMany()
@@ -233,7 +238,7 @@ namespace Persistence.Migrations
                     b.Navigation("TestCases");
                 });
 
-            modelBuilder.Entity("Persistence.Entities.TaskSolutionEntity", b =>
+            modelBuilder.Entity("Persistence.Entities.TaskSolution", b =>
                 {
                     b.Navigation("Solutions");
                 });

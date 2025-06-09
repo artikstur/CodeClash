@@ -6,8 +6,21 @@ using Core.Models;
 
 namespace Application.Services;
 
-public class ProblemsService(IProblemsRepository repository): BaseService
+public class ProblemsService(IProblemsRepository repository, SolutionsService solutionsService, ITaskSolutionRepository taskSolutionRepository): BaseService
 {
+    public async Task<long> Solve(long problemId, string code, long userId)
+    {
+        var tests = await repository.GetAllTestIds(problemId);
+        var taskSolutionId = await taskSolutionRepository.Create(userId);
+        
+        foreach (var testId in tests)
+        {
+            await solutionsService.AddSolutionForTestAsync(userId, testId, code, taskSolutionId);
+        }
+    
+        return taskSolutionId;
+    }
+
     public async Task Add(long userId, string name, string description, ProblemLevel problemLevel) => 
         await repository.Add(userId, name, description, problemLevel);
 

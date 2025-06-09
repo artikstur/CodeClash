@@ -15,6 +15,8 @@ import {useUpdateProblem} from "../hooks/api/useUpdateProblem.ts";
 import {useQueryClient} from "@tanstack/react-query";
 import {useGetProblemById} from "../hooks/api/useGetProblemById.ts";
 import {useDeleteTestCase} from "../hooks/api/useDeleteTestCase.ts";
+import {useTaskSolutionPolling} from "../hooks/api/useTaskSolutionPolling.ts";
+import {usePostTaskSolution} from "../hooks/api/usePostTaskSolution.ts";
 
 const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; onBack: () => void, isUser: boolean }) => {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -33,7 +35,9 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
   const [newTestInput, setNewTestInput] = useState("");
   const [newTestOutput, setNewTestOutput] = useState("");
   const { mutate: sendSolution, isLoading, isSuccess, isError, error } = usePostSolution();
+  const { mutate: sendTaskSolution} = usePostTaskSolution();
   const [solutionId, setSolutionId] = useState<number | null>(null);
+  const [solutionTaskId, setSolutionTaskId] = useState<number | null>(null);
 
   const {
     status: solutionStatus,
@@ -43,11 +47,30 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
     isTestFailed,
   } = useSolutionPolling(solutionId);
 
+  const {
+    status: solutionTaskStatus,
+    isPending: isTaskPolling,
+    isError: isTaskPollError,
+    isTaskSuccess,
+    isTaskFailed,
+  } = useTaskSolutionPolling(solutionTaskId);
+
   useEffect(() => {
     if (visibleTests.length > 0 && selectedTestId === null) {
       setSelectedTestId(visibleTests[0].id);
     }
   }, [visibleTests, selectedTestId]);
+
+  const handleSubmitSolution = () => {
+    sendTaskSolution(
+      { problemId: problem.id, code },
+      {
+        onSuccess: (returnedSolutionId) => {
+          setSolutionTaskId(returnedSolutionId);
+        },
+      }
+    );
+  };
 
   const handleRunTest = () => {
     if (!selectedTestId) return;
@@ -82,11 +105,6 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
     show: showNotification,
     close: closeNotification,
   } = useErrorNotification();
-
-  const handleSubmitSolution = () => {
-    console.log("Я отправил решение");
-  };
-
 
   const { mutate: updateProblem } = useUpdateProblem();
   const { data: updatedProblem, isLoading: isProblemLoading } = useGetProblemById(problem.id);

@@ -1,12 +1,9 @@
 using Api.Contracts.ProblemsController;
 using Api.Filters;
 using Application.Dtos.Specs;
-using Application.Interfaces.Repositories;
 using Application.Services;
 using AutoMapper;
 using Core.Enums;
-using Infrastructure.RabbitMq;
-using Infrastructure.RabbitMq.Contacts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistence.Entities;
@@ -17,7 +14,7 @@ namespace Api.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 public class ProblemsController(ProblemsService problemsService, IMapper mapper, 
-    ILogger<ProblemsController> logger) : BaseController
+    ILogger<ProblemsController> logger, SolutionsService solutionsService) : BaseController
 {
     [HttpPost]
     [UserIdFilter]
@@ -45,6 +42,26 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
         
         return Ok(mapper.Map<GetProblemResponse>(problem));
     }
+    
+    [HttpPost("Solve/{problemId:long}")]
+    [UserIdFilter]
+    [EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
+    public async Task<IActionResult> SolveProblem(long problemId, [FromBody] SolveRequest request)
+    {
+        var userId = (long)HttpContext.Items["userId"]!;
+        var solutionId = await problemsService.Solve(problemId, request.Code, userId);
+        
+        return Ok(new {solutionId});
+    }
+    
+    [HttpGet("SolutionStatus/{solutionId:long}")]
+    public async Task<IActionResult> CheckSolutionStatus(long solutionId)
+    {
+        var status = await solutionsService.GetSolutionStatus(solutionId);
+
+        return Ok(new {status});
+    }
+
 
     [HttpPut("{problemId:long}")]
     [UserIdFilter]
