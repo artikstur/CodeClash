@@ -53,6 +53,7 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
     isError: isTaskPollError,
     isTaskSuccess,
     isTaskFailed,
+    results: solutionResults,
   } = useTaskSolutionPolling(solutionTaskId);
 
   useEffect(() => {
@@ -115,6 +116,7 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
       setEditableProblem(updatedProblem);
     }
   }, [updatedProblem]);
+
   const handleSave = () => {
     setIsEditing(false);
 
@@ -291,6 +293,9 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
         onClose={() => setIsPanelOpen(false)}
         onStartResize={startResizing}
         isPolling={isPolling}
+        solutionResults={solutionResults}
+        isTaskSuccess={isTaskSuccess}
+        isTaskFailed={isTaskFailed}
       />
       {isTestFailed && (
         <ErrorNotification

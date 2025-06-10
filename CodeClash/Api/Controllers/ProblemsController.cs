@@ -59,6 +59,12 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
     {
         var status = await solutionsService.GetSolutionStatus(solutionId);
 
+        if (status is SolutionStatus.Failed || status is SolutionStatus.Success)
+        {
+            var data = await solutionsService.GetSolutions(solutionId);
+            return Ok(new { status, data });
+        }
+
         return Ok(new {status});
     }
 

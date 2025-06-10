@@ -1,7 +1,8 @@
 import {API_BASE_URL} from "../../utils/constants.ts";
 import {useQuery} from "@tanstack/react-query";
+import type {SolutionStatusResponse} from "../../interfaces/api/responses/SolutionResult.ts";
 
-export const getTaskSolutionStatus = async (solutionId: number): Promise<number> => {
+export const getTaskSolutionStatus = async (solutionId: number): Promise<SolutionStatusResponse> => {
   const res = await fetch(`${API_BASE_URL}/api/problems/solutionStatus/${solutionId}`, {
     method: 'GET',
     credentials: "include",
@@ -11,8 +12,7 @@ export const getTaskSolutionStatus = async (solutionId: number): Promise<number>
     throw new Error("Ошибка при получении статуса решения");
   }
 
-  const data = await res.json();
-  return data.status;
+  return await res.json();
 };
 
 export const useTaskSolutionPolling = (solutionId: number | null) => {
@@ -24,8 +24,8 @@ export const useTaskSolutionPolling = (solutionId: number | null) => {
     enabled,
     refetchInterval: (latestData) => {
       if (
-        latestData.state.data === 2 ||
-        latestData.state.data === 3
+        latestData.state.data?.status === 2 ||
+        latestData.state.data?.status === 3
       ) {
         return false;
       }
@@ -36,6 +36,7 @@ export const useTaskSolutionPolling = (solutionId: number | null) => {
   });
 
   return {
+    results: data?.data,
     status: data,
     isPending: data === 1,
     isError,

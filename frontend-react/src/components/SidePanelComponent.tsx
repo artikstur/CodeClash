@@ -1,7 +1,8 @@
-import React from 'react';
-import {FaTimes} from "react-icons/fa";
+import React, { useEffect } from "react";
+import { FaTimes } from "react-icons/fa";
 import styled from "styled-components";
-import type {TestCase} from "../interfaces/api/core/TestCase.ts";
+import type { TestCase } from "../interfaces/api/core/TestCase.ts";
+import type { SolutionResult } from "../interfaces/api/responses/SolutionResult.ts";
 
 type Props = {
   open: boolean;
@@ -16,21 +17,32 @@ type Props = {
   onClose: () => void;
   onStartResize: (e: React.MouseEvent) => void;
   isPolling: boolean;
+  solutionResults?: SolutionResult[];
+  isTaskSuccess?: boolean;
+  isTaskFailed?: boolean;
 };
 
 const SidePanelComponent = ({
-  open,
-  width,
-  code,
-  onCodeChange,
-  selectedTestId,
-  onSelectTest,
-  visibleTests,
-  onRunTest,
-  onSubmitSolution,
-  onClose,
-  onStartResize,
-  isPolling}: Props) => {
+                              open,
+                              width,
+                              code,
+                              onCodeChange,
+                              selectedTestId,
+                              onSelectTest,
+                              visibleTests,
+                              onRunTest,
+                              onSubmitSolution,
+                              onClose,
+                              onStartResize,
+                              isPolling,
+                              solutionResults = [],
+                              isTaskSuccess,
+                              isTaskFailed,
+                            }: Props) => {
+  useEffect(() => {
+    console.log(solutionResults);
+  }, [solutionResults]);
+
   return (
     <SidePanel open={open} width={width}>
       <ResizeHandle onMouseDown={onStartResize} />
@@ -44,7 +56,7 @@ const SidePanelComponent = ({
       <Label>Твой код</Label>
       <CodeEditorWrapper>
         <LineNumbers>
-          {code.split('\n').map((_, idx) => (
+          {code.split("\n").map((_, idx) => (
             <span key={idx}>{idx + 1}</span>
           ))}
         </LineNumbers>
@@ -56,10 +68,7 @@ const SidePanelComponent = ({
       </CodeEditorWrapper>
 
       <Label>Выбери тест</Label>
-      <Select
-        onChange={(e) => onSelectTest(Number(e.target.value))}
-        value={selectedTestId}
-      >
+      <Select onChange={(e) => onSelectTest(Number(e.target.value))} value={selectedTestId}>
         {visibleTests.map((test, index) => (
           <option key={test.id} value={test.id}>
             Пример #{index + 1}
@@ -75,9 +84,73 @@ const SidePanelComponent = ({
           {isPolling ? <Spinner /> : "Отправить решение"}
         </ActionButton>
       </ButtonRow>
+      <TestHistory solutionResults={solutionResults} />
+
     </SidePanel>
   );
 };
+
+const TestHistory = ({ solutionResults }: { solutionResults: SolutionResult[] }) => {
+  if (!solutionResults.length) {
+    return <HistoryEmpty>История тестов пуста</HistoryEmpty>;
+  }
+
+  return (
+    <HistoryWrapper>
+      <HistoryTitle>История тестов</HistoryTitle>
+      <HistoryList>
+        {solutionResults.map(({ testCase, solution }) => {
+          const statusColor =
+            solution.solutionStatus === 3
+              ? "#4caf50"
+              : solution.solutionStatus === 2
+                ? "#e63946"
+                : "#f4a261";
+
+          return (
+            <HistoryItem key={solution.id}>
+              <TestHeader>
+                <TestNumber>Тест #{testCase.id}</TestNumber>
+                <TestDate>{new Date(solution.testDate).toLocaleString()}</TestDate>
+                <StatusDot color={statusColor} title={getStatusText(solution.solutionStatus)} />
+              </TestHeader>
+
+              <IOWrapper>
+                <IODiv>
+                  <IOHeader>Входные данные</IOHeader>
+                  <IOContent>{testCase.input || "(пусто)"}</IOContent>
+                </IODiv>
+                <IODiv>
+                  <IOHeader>Ожидаемый вывод</IOHeader>
+                  <IOContent>{testCase.output || "(пусто)"}</IOContent>
+                </IODiv>
+                <IODiv>
+                  <IOHeader>Вывод решения</IOHeader>
+                  <IOContent isError={solution.solutionStatus !== 3}>
+                    {solution.outPut ?? "(нет данных)"}
+                  </IOContent>
+                </IODiv>
+              </IOWrapper>
+            </HistoryItem>
+          );
+        })}
+      </HistoryList>
+    </HistoryWrapper>
+  );
+};
+
+function getStatusText(status: number) {
+  switch (status) {
+    case 1:
+      return "В процессе";
+    case 2:
+      return "Ошибка";
+    case 3:
+      return "Успех";
+    default:
+      return "Неизвестно";
+  }
+}
 
 const Spinner = styled.div`
   width: 18px;
@@ -107,11 +180,12 @@ const CodeEditorWrapper = styled.div`
   border: 1px solid #333;
   border-radius: 8px;
   overflow: hidden;
-  font-family: 'Fira Code', 'Source Code Pro', monospace;
+  font-family: "Fira Code", "Source Code Pro", monospace;
   font-size: 14px;
   line-height: 1.5;
   box-shadow: inset 0 0 5px #000;
-  max-height: 400px;
+  max-height: 250px;
+  min-height: 250px;
 `;
 
 const LineNumbers = styled.div`
@@ -162,7 +236,6 @@ const StyledTextarea = styled.textarea`
   }
 `;
 
-
 const Select = styled.select`
   background: #222;
   border: 1px solid #444;
@@ -190,6 +263,11 @@ const ActionButton = styled.button`
   transition: 0.2s;
   width: 150px;
   height: 60px;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 const SidePanel = styled.div<{ open: boolean; width: number }>`
@@ -197,7 +275,6 @@ const SidePanel = styled.div<{ open: boolean; width: number }>`
   top: 0;
   right: 0;
   width: ${({ width }) => width}px;
-  height: 100%;
   background: #1a1a1a;
   border-left: 1px solid #333;
   padding: 1.5rem;
@@ -207,6 +284,8 @@ const SidePanel = styled.div<{ open: boolean; width: number }>`
   transform: ${({ open, width }) => (open ? "translateX(0)" : `translateX(${width}px)`)};
   transition: transform 0.3s ease-in-out;
   z-index: 1000;
+  overflow-y: auto;
+  height: 100%;
 `;
 
 const ResizeHandle = styled.div`
@@ -242,4 +321,156 @@ const PanelHeader = styled.div`
   margin-bottom: 0.5rem;
 `;
 
+const HistoryTitle = styled.div`
+  font-weight: bold;
+  color: #ccc;
+  margin-bottom: 0.7rem;
+  font-size: 1rem;
+  text-align: center;
+  user-select: none;
+`;
+
+const TestHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.3rem;
+`;
+
+const TestNumber = styled.span`
+  font-weight: bold;
+  color: #eee;
+`;
+
+const TestDate = styled.span`
+  font-size: 0.75rem;
+  color: #888;
+  flex-grow: 1;
+  user-select: none;
+`;
+
+const StatusDot = styled.span<{ color: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: ${({ color }) => color};
+`;
+
+const IOWrapper = styled.div`
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+const IODiv = styled.div`
+  flex: 1 1 30%;
+  min-width: 150px;
+  background: #222;
+  border-radius: 6px;
+  padding: 0.5rem;
+  color: #ddd;
+  box-shadow: inset 0 0 5px #000;
+  max-height: 100px;
+  overflow: auto;
+`;
+
+const IOHeader = styled.div`
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  color: #f07178;
+`;
+
+const IOContent = styled.pre<{ isError?: boolean }>`
+  font-family: "Fira Code", monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: ${({ isError }) => (isError ? "#e63946" : "#a8dadc")};
+`;
+
+const HistoryWrapper = styled.div`
+  background: #121212;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: auto;
+  font-family: "Fira Code", monospace;
+  font-size: 13px;
+  max-height: 300px;
+  transition: all 0.3s ease;
+
+  /* Тонкий красный скроллбар */
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #121212;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d62828;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a4161a;
+  }
+`;
+
+const HistoryList = styled.div`
+  animation: fadeIn 0.3s ease-out forwards;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const HistoryItem = styled.div`
+  border-bottom: 1px solid #333;
+  padding: 0.5rem 0;
+  animation: itemAppear 0.3s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
+
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.3s; }
+  &:nth-child(4) { animation-delay: 0.4s; }
+  &:nth-child(5) { animation-delay: 0.5s; }
+
+  @keyframes itemAppear {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const HistoryEmpty = styled.div`
+  margin-top: auto;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  user-select: none;
+  animation: fadeIn 0.5s ease-out;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+`;
 export default SidePanelComponent;

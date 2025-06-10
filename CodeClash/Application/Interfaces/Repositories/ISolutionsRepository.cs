@@ -14,4 +14,6 @@ public interface ISolutionsRepository
     Task<bool> IsAuthor(long userId, long solutionId);
 
     Task<string> GetNeededTestCaseOutput(long solutionId);
+
+    Task<TestCase> GetTestCase(long solutionId);
 }

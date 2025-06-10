@@ -35,6 +35,17 @@ public class SolutionsRepository(WriteDbContext dbContext, IMapper mapper): ISol
         return mapper.Map<Solution>(entity);
     }
     
+    public async Task<TestCase> GetTestCase(long solutionId)
+    {
+        var entity = await dbContext.Solutions
+            .AsNoTracking()
+            .Where(x => x.Id == solutionId)
+            .Select(x => x.TestCase)
+            .FirstAsync();
+
+        return mapper.Map<TestCase>(entity);
+    }
+    
     public async Task<string> GetNeededTestCaseOutput(long solutionId)
     {
         var output = await dbContext.Solutions
