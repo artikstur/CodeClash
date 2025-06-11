@@ -5,17 +5,17 @@ import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import {useBattleHub} from "../hooks/api/useBattleHub.ts";
 import {useUserStats} from "../hooks/api/useUserStats.ts";
 import type {BattleRoomProps} from "./Battle.tsx";
-import { FiCheck } from "react-icons/fi";
+import {FiCheck} from "react-icons/fi";
 import {getProblemForBattle} from "../hooks/api/useProblemsByLevel.ts";
 import type {ProblemLevel} from "../interfaces/api/enums/ProblemLevel.ts";
 import type {GetProblemResponse} from "../interfaces/api/responses/GetProblemsResponse.ts";
 
-const BattleRoom = ({ roomCode, isCreator }: BattleRoomProps) => {
-  const { showError, message, show } = useErrorNotification();
+const BattleRoom = ({roomCode, isCreator}: BattleRoomProps) => {
+  const {showError, message, show} = useErrorNotification();
   const [opponentNickname, setOpponentNickname] = useState<string | null>(null);
   const [opponentReady, setOpponentReady] = useState(false);
   const [myReady, setMyReady] = useState(false);
-  const { data, isLoading, error } = useUserStats();
+  const {data, isLoading, error} = useUserStats();
   const connection = useBattleHub(roomCode, data?.userName);
   const [difficulty, setDifficulty] = useState<ProblemLevel>(1);
   const [currentProblem, setCurrentProblem] = useState<GetProblemResponse | null>(null);
@@ -108,43 +108,36 @@ const BattleRoom = ({ roomCode, isCreator }: BattleRoomProps) => {
   };
 
   if (showSolveComponent && currentProblem) {
-    return <SolveProblemTogether problem={currentProblem} />;
+    return <SolveProblemTogether problem={currentProblem}/>;
   }
 
   return (
     <>
       <BattleRoomCard>
-        <NickRow>
-          <Nickname>{data?.userName}</Nickname>
-          <Nickname>
-            {opponentNickname ? `Гость: ${opponentNickname}` : "Ожидание соперника..."}
-          </Nickname>
-        </NickRow>
-        <ReadyRow>
-          <ReadyButton onClick={handleReadyClick} disabled={myReady} ready={myReady}>
-            {myReady ? (
-              <>
-                <FiCheck />
-                Готов
-              </>
-            ) : (
-              "Готов"
-            )}
-          </ReadyButton>
-
-          <ReadyButton disabled ready={opponentReady}>
-            {opponentReady ? (
-              <>
-                <FiCheck />
-                Готов
-              </>
-            ) : opponentNickname ? (
-              "Ожидание..."
-            ) : (
-              "Нет соперника"
-            )}
-          </ReadyButton>
-        </ReadyRow>
+        <PlayerBoxContainer>
+          <PlayerCard isAdmin={isCreator}>
+            <RoleTag isAdmin={isCreator}>{isCreator ? 'Админ' : 'Гость'}</RoleTag>
+            <NicknameText> {data?.userName}</NicknameText>
+            <StatusText ready={myReady}>
+              {myReady ? "Готов" : "Нажмите «Готов»"}
+            </StatusText>
+            <ReadyRow>
+              <ReadyButton onClick={handleReadyClick} disabled={myReady} ready={myReady}>
+                {myReady ? <><FiCheck/> Готов</> : "Готов"}
+              </ReadyButton>
+            </ReadyRow>
+          </PlayerCard>
+          <PlayerCard isAdmin={!isCreator} dimmed={!opponentNickname}>
+            <RoleTag isAdmin={!isCreator}>{!isCreator ? 'Админ' : 'Гость'}</RoleTag>
+            <NicknameText>
+              {opponentNickname ? opponentNickname : "Ожидание игрока..."}
+            </NicknameText>
+            <StatusText ready={opponentReady}>
+              {opponentReady ? "Готов" : opponentNickname ? "Ожидание готовности" : ""}
+            </StatusText>
+          </PlayerCard>
+        </PlayerBoxContainer>
+        {isCreator && <DifficultyLabel>Выберите сложность:</DifficultyLabel>}
         <DifficultySelector>
           <DifficultyOption
             selected={difficulty === 1}
@@ -157,7 +150,7 @@ const BattleRoom = ({ roomCode, isCreator }: BattleRoomProps) => {
           <DifficultyOption
             selected={difficulty === 2}
             level={2}
-            onClick={() => setDifficulty(2)}
+            onClick={() => isCreator && setDifficulty(2)}
             disabled={!isCreator}
           >
             Medium
@@ -165,7 +158,7 @@ const BattleRoom = ({ roomCode, isCreator }: BattleRoomProps) => {
           <DifficultyOption
             selected={difficulty === 3}
             level={3}
-            onClick={() => setDifficulty(3)}
+            onClick={() => isCreator && setDifficulty(3)}
             disabled={!isCreator}
           >
             Hard
@@ -186,6 +179,60 @@ const BattleRoom = ({ roomCode, isCreator }: BattleRoomProps) => {
     </>
   );
 };
+
+const PlayerBoxContainer = styled.div`
+  display: flex;
+  width: 100%;
+  gap: 1.5rem;
+  margin-top: 1rem;
+`;
+
+const PlayerCard = styled.div<{ isAdmin: boolean; dimmed?: boolean }>`
+  flex: 1;
+  background-color: ${({dimmed}) => (dimmed ? "#2a2a2a88" : "#2a2a2a")};
+  border: 2px solid ${({isAdmin}) => (isAdmin ? "#d62828" : "#ffffff33")};
+  border-radius: 12px;
+  padding: 1.5rem;
+  color: white;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 0 10px ${({isAdmin}) => (isAdmin ? "#d62828aa" : "#ffffff22")};
+  opacity: ${({dimmed}) => (dimmed ? 0.6 : 1)};
+`;
+
+const RoleTag = styled.div<{ isAdmin: boolean }>`
+  position: absolute;
+  top: -12px;
+  left: 12px;
+  background-color: ${({isAdmin}) => (isAdmin ? "#d62828" : "#6c757d")};
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-radius: 8px;
+`;
+
+const NicknameText = styled.div`
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 1rem;
+`;
+
+const StatusText = styled.div<{ ready?: boolean }>`
+  margin-top: 0.5rem;
+  color: ${({ready}) => (ready ? "#70e000" : "#f8f9fa88")};
+  font-weight: bold;
+  font-size: 0.95rem;
+`;
+
+const DifficultyLabel = styled.div`
+  margin-top: 1rem;
+  text-align: center;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  opacity: 0.8;
+`;
+
 const DifficultySelector = styled.div`
   display: flex;
   gap: 1rem;
@@ -198,11 +245,11 @@ const DifficultyOption = styled.button<{ selected?: boolean; level: ProblemLevel
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  background-color: ${({ level }) =>
-  level === 1 ? '#70e000' : level === 2 ? '#f48c06' : '#d00000'};
+  background-color: ${({level}) =>
+          level === 1 ? '#70e000' : level === 2 ? '#f48c06' : '#d00000'};
   color: white;
-  opacity: ${({ selected }) => (selected ? 1 : 0.6)};
-  border-color: ${({ selected }) => (selected ? 'white' : 'transparent')};
+  opacity: ${({selected}) => (selected ? 1 : 0.6)};
+  border-color: ${({selected}) => (selected ? 'white' : 'transparent')};
   transition: all 0.2s;
 
   &:hover {
@@ -261,96 +308,98 @@ const Toast = styled.div<{ visible?: boolean }>`
   font-weight: bold;
   font-size: 0.95rem;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  opacity: ${({ visible }) => (visible ? 1 : 0)};
-  transform: ${({ visible }) =>
-  visible ? "translateX(0)" : "translateX(100%)"};
+  opacity: ${({visible}) => (visible ? 1 : 0)};
+  transform: ${({visible}) =>
+          visible ? "translateX(0)" : "translateX(100%)"};
   transition: opacity 0.4s ease, transform 0.4s ease;
   z-index: 1000;
 `;
 
 const fadeIn = keyframes`
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 `;
 
 const BattleCard = styled.div`
-    background-color: #1a1a1a;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 0 10px #a4161a;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-width: 300px;
-    position: relative;
+  background-color: #1a1a1a;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 0 10px #a4161a;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 300px;
+  position: relative;
 `;
 
 const BattleRoomCard = styled(BattleCard)`
-    min-width: 400px;
-    align-items: center;
+  min-width: 400px;
+  align-items: center;
 `;
 
 const Button = styled.button`
-    background: linear-gradient(90deg, #d62828, #a4161a);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.2rem;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: 0.2s;
+  background: linear-gradient(90deg, #d62828, #a4161a);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: 0.2s;
 
-    &:hover {
-        background: linear-gradient(90deg, #d62828cc, #a4161acc);
-    }
+  &:hover {
+    background: linear-gradient(90deg, #d62828cc, #a4161acc);
+  }
 `;
 
 const NickRow = styled.div`
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    gap: 2rem;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 2rem;
 `;
 
 const Nickname = styled.div`
-    flex: 1;
-    text-align: center;
-    font-size: 1.2rem;
-    color: white;
-    padding: 1rem;
-    background-color: #2a2a2a;
-    border-radius: 10px;
-    font-weight: bold;
+  flex: 1;
+  text-align: center;
+  font-size: 1.2rem;
+  color: white;
+  padding: 1rem;
+  background-color: #2a2a2a;
+  border-radius: 10px;
+  font-weight: bold;
 `;
 
 const ReadyRow = styled.div`
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    gap: 2rem;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 2rem;
 `;
 
 const ReadyButton = styled(Button)<{ ready?: boolean }>`
   flex: 1;
+  width: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  opacity: ${({ ready }) => (ready ? 0.85 : 1)};
-  background: ${({ ready }) =>
+  opacity: ${({ready}) => (ready ? 0.85 : 1)};
+  background: ${({ready}) =>
           ready
                   ? "linear-gradient(90deg, #70e000, #38b000)"
                   : "linear-gradient(90deg, #d62828, #a4161a)"};
 
   &:hover {
-    background: ${({ ready }) =>
+    background: ${({ready}) =>
             ready
                     ? "linear-gradient(90deg, #70e000cc, #38b000cc)"
                     : "linear-gradient(90deg, #d62828cc, #a4161acc)"};
