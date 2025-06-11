@@ -61,7 +61,6 @@ const LoginPage = () => {
 
     loginMutation.mutate(form, {
       onSuccess: (data) => {
-        console.log('Успешный логин:', data);
         navigate("/main");
       },
       onError: (error: Error) => {
@@ -102,7 +101,9 @@ const LoginPage = () => {
           </InputGroup>
           {errors.password && <Error>{errors.password}</Error>}
 
-          <Button type="submit">Войти</Button>
+          <Button type="submit" disabled={loginMutation.isPending}>
+            {loginMutation.isPending ? <Spinner /> : "Войти"}
+          </Button>
           <RegisterLinkWrapper>
             <span>Нет аккаунта?</span>
             <StyledLink to="/register">Зарегистрироваться</StyledLink>
@@ -119,6 +120,21 @@ const LoginPage = () => {
     </>
   );
 };
+
+const Spinner = styled.div`
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 0.6s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 const Wrapper = styled.div`
   height: 100vh;
@@ -199,6 +215,10 @@ const Button = styled.button`
   margin-top: 1rem;
   font-weight: bold;
   transition: all 0.2s ease;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     transform: translateY(-2px);

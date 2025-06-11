@@ -132,7 +132,9 @@ const RegisterPage = () => {
           </InputGroup>
           {errors.confirmPassword && <Error>{errors.confirmPassword}</Error>}
 
-          <Button type="submit">Зарегистрироваться</Button>
+          <Button type="submit" disabled={registerMutation.isPending}>
+            {registerMutation.isPending ? <Spinner /> : "Зарегистрироваться"}
+          </Button>
           <RegisterLinkWrapper>
             <span>Уже есть аккаунт?</span>
             <StyledLink to="/login">Войти</StyledLink>
@@ -149,6 +151,21 @@ const RegisterPage = () => {
     </>
   );
 };
+
+const Spinner = styled.div`
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 0.6s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 const Wrapper = styled.div`
   height: 100vh;
@@ -229,6 +246,10 @@ const Button = styled.button`
   margin-top: 1rem;
   font-weight: bold;
   transition: all 0.2s ease;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     transform: translateY(-2px);

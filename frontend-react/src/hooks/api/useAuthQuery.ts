@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import {API_BASE_URL} from "../../utils/constants.ts";
 
 const fetchAuthCheck = async () => {
-  const response = await fetch("/api/auth/check", {
+  const response = await fetch(`${API_BASE_URL}/api/users/check`, {
     method: "GET",
     credentials: "include",
   });
