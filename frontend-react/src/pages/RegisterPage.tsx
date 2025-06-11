@@ -5,7 +5,7 @@ import Title from "../components/Title.tsx";
 import {useRegisterMutation} from "../hooks/api/useRegisterMutation.ts";
 import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import ErrorNotification from "../components/ErrorNotification.tsx";
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -28,6 +28,7 @@ type RegisterForm = {
 }
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const [form, setForm] = useState<RegisterForm>({
     userName: "",
     email: "",
@@ -67,6 +68,7 @@ const RegisterPage = () => {
     registerMutation.mutate(form, {
       onSuccess: (data) => {
         console.log('Успешная регистрация:', data);
+        navigate("/login");
       },
       onError: (error: Error) => {
         showNotification("Произошла ошибка при входе");

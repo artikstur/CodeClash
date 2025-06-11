@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import { FaBolt, FaCode, FaUserCircle  } from "react-icons/fa";
-import Tasks from "../../components/Tasks";
-import Battle from "../../components/Battle";
-import Account from "../../components/Account.tsx";
+import Tasks from "../components/Tasks.tsx";
+import Battle from "../components/Battle.tsx";
+import Account from "../components/Account.tsx";
 
 const GlobalStyle = createGlobalStyle`
   * {

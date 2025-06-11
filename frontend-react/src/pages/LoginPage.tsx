@@ -6,6 +6,7 @@ import { useLoginMutation } from '../hooks/api/useLoginMutation.ts';
 import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import ErrorNotification from "../components/ErrorNotification.tsx";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -26,6 +27,7 @@ type LoginForm = {
 }
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [form, setForm] = useState<LoginForm>({
     email: "",
     password: "",
@@ -60,6 +62,7 @@ const LoginPage = () => {
     loginMutation.mutate(form, {
       onSuccess: (data) => {
         console.log('Успешный логин:', data);
+        navigate("/main");
       },
       onError: (error: Error) => {
         showNotification("Произошла ошибка при входе");
