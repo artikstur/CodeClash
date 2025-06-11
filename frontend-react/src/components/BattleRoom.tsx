@@ -8,8 +8,9 @@ import type {BattleRoomProps} from "./Battle.tsx";
 import { FiCheck } from "react-icons/fi";
 import {getProblemForBattle} from "../hooks/api/useProblemsByLevel.ts";
 import type {ProblemLevel} from "../interfaces/api/enums/ProblemLevel.ts";
+import type {GetProblemResponse} from "../interfaces/api/responses/GetProblemsResponse.ts";
 
-const BattleRoom = ({ roomCode }: BattleRoomProps) => {
+const BattleRoom = ({ roomCode, isCreator }: BattleRoomProps) => {
   const { showError, message, show } = useErrorNotification();
   const [opponentNickname, setOpponentNickname] = useState<string | null>(null);
   const [opponentReady, setOpponentReady] = useState(false);
@@ -17,6 +18,7 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
   const { data, isLoading, error } = useUserStats();
   const connection = useBattleHub(roomCode, data?.userName);
   const [difficulty, setDifficulty] = useState<ProblemLevel>(1);
+  const [currentProblem, setCurrentProblem] = useState<GetProblemResponse | null>(null);
 
   useEffect(() => {
     if (!connection) return;
@@ -26,10 +28,8 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
     setMyReady(false);
 
     connection.on("UserJoined", (id, nickname) => {
-      console.log(id, nickname)
       if (nickname !== data?.userName) {
         setOpponentNickname(nickname);
-        console.log("set")
       }
     });
 
@@ -46,8 +46,10 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
       }
     });
 
-    connection.on("StartGame", () => {
-      handleStart();
+    connection.on("StartGame", (problem: GetProblemResponse) => {
+      console.log("Игра началась с задачей:", problem);
+      setCurrentProblem(problem);
+      setShowSolveComponent(true);
     });
 
     return () => {
@@ -58,16 +60,34 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
     };
   }, [connection]);
 
+  useEffect(() => {
+    if (connection && isCreator) {
+      connection.invoke("SetDifficulty", roomCode, difficulty);
+    }
+  }, [difficulty]);
+
+  useEffect(() => {
+    if (!connection) return;
+
+    connection.on("DifficultyUpdated", (level: ProblemLevel) => {
+      setDifficulty(level);
+    });
+
+    return () => {
+      connection.off("DifficultyUpdated");
+    };
+  }, [connection]);
+
   const handleReadyClick = () => {
     setMyReady(true);
     connection?.invoke("SendReadyStatus", roomCode, data?.userName, true);
   };
 
   useEffect(() => {
-    if (myReady && opponentReady) {
-      connection?.invoke("StartGame", roomCode);
+    if (myReady && opponentReady && isCreator) {
+      handleStart();
     }
-  }, [myReady, opponentReady]);
+  }, [myReady, opponentReady, isCreator]);
 
   const handleInvite = () => {
     navigator.clipboard.writeText(roomCode).then(() => {
@@ -78,18 +98,18 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
   const [showSolveComponent, setShowSolveComponent] = useState(false);
 
   const handleStart = async () => {
-    console.log('START')
     try {
       const problem = await getProblemForBattle(difficulty);
-      console.log("Полученная задача:", problem);
-      setShowSolveComponent(true);
+      await connection?.invoke("StartGame", roomCode, problem);
+
     } catch (error: any) {
       show(error.message || "Ошибка при получении задачи");
     }
   };
 
-
-  if (showSolveComponent) return <SolveProblemTogether />;
+  if (showSolveComponent && currentProblem) {
+    return <SolveProblemTogether problem={currentProblem} />;
+  }
 
   return (
     <>
@@ -129,7 +149,8 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
           <DifficultyOption
             selected={difficulty === 1}
             level={1}
-            onClick={() => setDifficulty(1)}
+            onClick={() => isCreator && setDifficulty(1)}
+            disabled={!isCreator}
           >
             Easy
           </DifficultyOption>
@@ -137,6 +158,7 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
             selected={difficulty === 2}
             level={2}
             onClick={() => setDifficulty(2)}
+            disabled={!isCreator}
           >
             Medium
           </DifficultyOption>
@@ -144,11 +166,11 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
             selected={difficulty === 3}
             level={3}
             onClick={() => setDifficulty(3)}
+            disabled={!isCreator}
           >
             Hard
           </DifficultyOption>
         </DifficultySelector>
-        <StartButton onClick={handleStart}>Старт</StartButton>
       </BattleRoomCard>
       {showError && <Toast visible={showError}>{message}</Toast>}
 

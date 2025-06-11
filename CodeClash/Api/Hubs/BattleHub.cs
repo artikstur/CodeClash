@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
+using Api.Contracts.ProblemsController;
 
 namespace Api.Hubs;
 
@@ -7,7 +8,8 @@ public class BattleHub : Hub
 {
     private static ConcurrentDictionary<string, List<string>> Rooms = new();
     private static ConcurrentDictionary<string, string> ConnectionNicknames = new();
-
+    private static ConcurrentDictionary<string, GetProblemResponse> RoomProblems = new();
+    
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         if (ConnectionNicknames.TryRemove(Context.ConnectionId, out var nickname))
@@ -55,8 +57,14 @@ public class BattleHub : Hub
         await Clients.Group(roomCode).SendAsync("ReceiveReadyStatus", Context.ConnectionId, nickname, isReady);
     }
 
-    public async Task StartGame(string roomCode)
+    public async Task StartGame(string roomCode, GetProblemResponse problem)
     {
-        await Clients.Group(roomCode).SendAsync("StartGame");
+        RoomProblems[roomCode] = problem;
+        await Clients.Group(roomCode).SendAsync("StartGame", problem);
+    }
+    
+    public async Task SetDifficulty(string roomCode, int level)
+    {
+        await Clients.Group(roomCode).SendAsync("DifficultyUpdated", level);
     }
 }

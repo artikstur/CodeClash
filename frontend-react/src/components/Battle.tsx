@@ -6,12 +6,14 @@ import {generateRoomCode} from "../hooks/useRoomCode.ts";
 
 export interface BattleRoomProps {
   roomCode: string;
+  isCreator: boolean;
 }
 const Battle = () => {
   const [mode, setMode] = useState<"select" | "input" | "room">("select");
   const [inviteCode, setInviteCode] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const { showError, message, show } = useErrorNotification();
+  const [isCreator, setIsCreator] = useState(false);
 
   const handleJoin = () => {
     if (!inviteCode.trim()) {
@@ -19,12 +21,14 @@ const Battle = () => {
       return;
     }
     setRoomCode(inviteCode);
+    setIsCreator(false);
     setMode("room");
   };
 
   const handleInvite = () => {
     const newCode = generateRoomCode();
     setRoomCode(newCode);
+    setIsCreator(true);
     navigator.clipboard.writeText(newCode).then(() => {
       show("Код приглашения скопирован в буфер обмена");
       setMode("room");
@@ -34,7 +38,7 @@ const Battle = () => {
   return (
     <BattleWrapper>
       {mode === "room" ? (
-        <BattleRoom roomCode={roomCode} />
+        <BattleRoom roomCode={roomCode} isCreator={isCreator}/>
       ) : (
         <BattleCard>
           {mode === "select" ? (
