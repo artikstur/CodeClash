@@ -7,6 +7,8 @@ public interface ITaskSolutionRepository
 {
     Task<long> Create(long userId);
 
+    Task<int> GetUserSolutionsCount(long userId);
+
     Task SetStatus(long id, SolutionStatus status);
     
     Task<SolutionStatus> GetStatus(long id);

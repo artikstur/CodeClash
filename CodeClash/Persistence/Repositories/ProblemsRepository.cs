@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using Application.Dtos;
-using Application.Dtos.Specs;
 using Application.Interfaces.Repositories;
 using AutoMapper;
 using Core.Enums;

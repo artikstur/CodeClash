@@ -1,3 +1,4 @@
+using Application.Dtos;
 using Application.Interfaces.Repositories;
 using AutoMapper;
 using Core.Enums;
@@ -33,6 +34,45 @@ public class SolutionsRepository(WriteDbContext dbContext, IMapper mapper): ISol
             .SingleAsync(x => x.Id == solutionId);
 
         return mapper.Map<Solution>(entity);
+    }
+    
+    public async Task<UserSolutionStatsDto> GetUserStatsAsync(long userId)
+    {
+        var solutions = await dbContext.Solutions
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.SolutionStatus != SolutionStatus.InProcess && x.TestDate != null)
+            .ToListAsync();
+
+        var stats = new UserSolutionStatsDto
+        {
+            TotalCount = solutions.Count,
+            SuccessCount = solutions.Count(s => s.SolutionStatus == SolutionStatus.Success),
+            FailedCount = solutions.Count(s => s.SolutionStatus == SolutionStatus.Failed)
+        };
+
+        stats.SuccessRate = stats.TotalCount > 0
+            ? Math.Round((double)stats.SuccessCount / stats.TotalCount * 100, 2)
+            : 0;
+
+        if (solutions.Count == 0) return stats;
+        {
+            stats.FirstSubmissionDate = solutions.Min(s => s.TestDate);
+            stats.LastSubmissionDate = solutions.Max(s => s.TestDate);
+
+            stats.ActiveDays = solutions
+                .Select(s => s.TestDate!.Value.Date)
+                .Distinct()
+                .Count();
+
+            stats.AttemptsByDate = solutions
+                .GroupBy(s => s.TestDate!.Value.Date)
+                .ToDictionary(
+                    g => g.Key.ToString("yyyy-MM-dd"),
+                    g => g.Count()
+                );
+        }
+
+        return stats;
     }
 
     public async Task SetOutput(long solutionId, string? output)

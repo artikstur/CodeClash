@@ -22,6 +22,16 @@ public class TaskSolutionRepository(WriteDbContext dbContext, IMapper mapper): I
 
         return newJob.Id;
     }
+    
+    public async Task<int> GetUserSolutionsCount(long userId)
+    {
+        var count = await dbContext.TaskSolutions
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .CountAsync();
+
+        return count;
+    }
 
     public async Task SetStatus(long id, SolutionStatus status)
     {

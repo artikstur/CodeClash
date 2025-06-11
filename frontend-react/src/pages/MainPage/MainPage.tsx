@@ -58,14 +58,28 @@ const MainPage = () => {
             onClick={() => setActiveTab("account")}
           >
             <FaUserCircle />
-            Aккаунт
+            Аккаунт
           </NavItem>
+          <Brand>CODE CLASH</Brand>
         </Navbar>
         <ContentWrapper>{renderContent()}</ContentWrapper>
       </PageWrapper>
     </>
   );
 };
+
+const Brand = styled.div`
+  margin-left: auto;
+  color: #d62828;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  text-shadow: 0 0 5px rgba(214, 40, 40, 0.6);
+  font-style: italic;
+`;
 
 const PageWrapper = styled.div`
   display: flex;

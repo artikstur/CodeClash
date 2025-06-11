@@ -1,6 +1,6 @@
 using Core.Enums;
 
-namespace Application.Dtos.Specs;
+namespace Application.Dtos;
 
 public class ProblemsSpec: BaseSpec
 {

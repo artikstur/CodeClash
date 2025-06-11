@@ -76,4 +76,10 @@ public class SolutionsService(ISolutionsRepository solutionsRepository, IRabbitM
 
         return solution.SolutionStatus;
     }
+
+    public async Task<UserSolutionStatsDto> GetUserTestCaseSolutionStats(long userId) =>
+        await solutionsRepository.GetUserStatsAsync(userId);
+    
+    public async Task<int> GetUserSolutionsCount(long userId) =>
+        await taskSolutionRepository.GetUserSolutionsCount(userId);
 }

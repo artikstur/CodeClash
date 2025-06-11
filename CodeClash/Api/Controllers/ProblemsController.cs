@@ -1,6 +1,6 @@
 using Api.Contracts.ProblemsController;
 using Api.Filters;
-using Application.Dtos.Specs;
+using Application.Dtos;
 using Application.Services;
 using AutoMapper;
 using Core.Enums;
