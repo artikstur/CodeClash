@@ -6,7 +6,7 @@ namespace Application.Interfaces.Repositories;
 
 public interface IProblemsRepository
 {
-    Task<bool> IsOutputsEquals(long testCaseId, string codeOutPut);
+    Task<Problem> GetRandomProblemByLevel(ProblemLevel problemLevel);
     
     Task Add(long userId, string name, string description, ProblemLevel problemLevel);
     

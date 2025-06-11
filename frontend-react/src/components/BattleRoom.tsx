@@ -1,12 +1,13 @@
 import styled, {keyframes} from "styled-components";
 import SolveProblemTogether from "./SolveProblemTogether.tsx";
 import React, {useEffect, useState} from "react";
-import type {GetProblemResponse} from "../interfaces/api/responses/GetProblemsResponse.ts";
 import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import {useBattleHub} from "../hooks/api/useBattleHub.ts";
 import {useUserStats} from "../hooks/api/useUserStats.ts";
 import type {BattleRoomProps} from "./Battle.tsx";
 import { FiCheck } from "react-icons/fi";
+import {getProblemForBattle} from "../hooks/api/useProblemsByLevel.ts";
+import type {ProblemLevel} from "../interfaces/api/enums/ProblemLevel.ts";
 
 const BattleRoom = ({ roomCode }: BattleRoomProps) => {
   const { showError, message, show } = useErrorNotification();
@@ -15,6 +16,7 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
   const [myReady, setMyReady] = useState(false);
   const { data, isLoading, error } = useUserStats();
   const connection = useBattleHub(roomCode, data?.userName);
+  const [difficulty, setDifficulty] = useState<ProblemLevel>(1);
 
   useEffect(() => {
     if (!connection) return;
@@ -73,51 +75,19 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
     });
   };
 
-  const problems: GetProblemResponse[] = [
-    {
-      id: 1,
-      name: "Simple Math Problem",
-      description: "Solve the equation: 2 + 2 = ?",
-      level: 1,
-    },
-    {
-      id: 2,
-      name: "Array Sum",
-      description: "Find the sum of array elements.",
-      level: 2,
-    },
-    {
-      id: 3,
-      name: "Palindrome Check",
-      description: "Check if a string is a palindrome.",
-      level: 3,
-    },
-  ];
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedProblem, setSelectedProblem] = useState<GetProblemResponse | null>(null);
   const [showSolveComponent, setShowSolveComponent] = useState(false);
-  const [animatingProblem, setAnimatingProblem] = useState<GetProblemResponse | null>(null);
 
-  const handleStart = () => {
-    setModalVisible(true);
-
-    const interval = setInterval(() => {
-      const random = problems[Math.floor(Math.random() * problems.length)];
-      setAnimatingProblem(random);
-    }, 150);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      const final = problems[Math.floor(Math.random() * problems.length)];
-      setAnimatingProblem(final);
-      setSelectedProblem(final);
-      setTimeout(() => {
-        setModalVisible(false);
-        setShowSolveComponent(true);
-      }, 1200);
-    }, 2500);
+  const handleStart = async () => {
+    console.log('START')
+    try {
+      const problem = await getProblemForBattle(difficulty);
+      console.log("Полученная задача:", problem);
+      setShowSolveComponent(true);
+    } catch (error: any) {
+      show(error.message || "Ошибка при получении задачи");
+    }
   };
+
 
   if (showSolveComponent) return <SolveProblemTogether />;
 
@@ -154,19 +124,32 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
               "Нет соперника"
             )}
           </ReadyButton>
-
         </ReadyRow>
+        <DifficultySelector>
+          <DifficultyOption
+            selected={difficulty === 1}
+            level={1}
+            onClick={() => setDifficulty(1)}
+          >
+            Easy
+          </DifficultyOption>
+          <DifficultyOption
+            selected={difficulty === 2}
+            level={2}
+            onClick={() => setDifficulty(2)}
+          >
+            Medium
+          </DifficultyOption>
+          <DifficultyOption
+            selected={difficulty === 3}
+            level={3}
+            onClick={() => setDifficulty(3)}
+          >
+            Hard
+          </DifficultyOption>
+        </DifficultySelector>
         <StartButton onClick={handleStart}>Старт</StartButton>
       </BattleRoomCard>
-
-      {modalVisible && (
-        <ModalBackdrop>
-          <ModalCard>
-            <ModalTitle>Выбор задачи...</ModalTitle>
-            <ProblemName>{animatingProblem?.name}</ProblemName>
-          </ModalCard>
-        </ModalBackdrop>
-      )}
       {showError && <Toast visible={showError}>{message}</Toast>}
 
       {roomCode && (
@@ -181,6 +164,29 @@ const BattleRoom = ({ roomCode }: BattleRoomProps) => {
     </>
   );
 };
+const DifficultySelector = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+`;
+
+const DifficultyOption = styled.button<{ selected?: boolean; level: ProblemLevel }>`
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: ${({ level }) =>
+  level === 1 ? '#70e000' : level === 2 ? '#f48c06' : '#d00000'};
+  color: white;
+  opacity: ${({ selected }) => (selected ? 1 : 0.6)};
+  border-color: ${({ selected }) => (selected ? 'white' : 'transparent')};
+  transition: all 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
 
 const RoomCodeCard = styled.div`
   position: fixed;
@@ -332,37 +338,6 @@ const ReadyButton = styled(Button)<{ ready?: boolean }>`
 const StartButton = styled(Button)`
   width: 100%;
   margin-top: 1rem;
-`;
-
-const ModalBackdrop = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  animation: ${fadeIn} 0.3s ease-out;
-  z-index: 1000;
-`;
-
-const ModalCard = styled.div`
-  background-color: #1a1a1a;
-  padding: 2rem 3rem;
-  border-radius: 16px;
-  box-shadow: 0 0 15px #a4161a;
-  text-align: center;
-`;
-
-const ModalTitle = styled.h2`
-  color: white;
-  margin-bottom: 1rem;
-`;
-
-const ProblemName = styled.div`
-  font-size: 1.2rem;
-  color: #fca311;
-  font-weight: bold;
-  animation: ${fadeIn} 0.3s ease-in;
 `;
 
 export default BattleRoom;

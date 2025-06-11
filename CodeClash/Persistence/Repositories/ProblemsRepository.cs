@@ -20,6 +20,17 @@ public class ProblemsRepository(WriteDbContext dbContext, IMapper mapper): IProb
         return testCase.Output == codeOutPut;
     }
 
+    public async Task<Problem> GetRandomProblemByLevel(ProblemLevel problemLevel)
+    {
+        var randomProblemEntity = await dbContext.Problems
+            .AsNoTracking()
+            .Where(p => p.Level == problemLevel)
+            .OrderBy(x => Guid.NewGuid()) 
+            .FirstAsync();
+
+        return mapper.Map<Problem>(randomProblemEntity);
+    }
+
     public async Task Add(long userId, string name, string description, ProblemLevel problemLevel)
     {
         var problemEntity = new ProblemEntity

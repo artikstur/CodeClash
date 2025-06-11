@@ -134,4 +134,21 @@ public class ProblemsController(ProblemsService problemsService, IMapper mapper,
         
         return Ok(response);
     }
+    
+    [HttpGet("ProblemForBattle")]
+    public async Task<IActionResult> GetProblemForBattle([FromQuery] ProblemLevel problemLevel)
+    {
+        logger.LogInformation($"Запрос на получение задачи для поединка");
+
+        var problem = await problemsService.GetRandomProblemByLevel(problemLevel);
+        var response = new GetProblemResponse
+        {
+            Id = problem.Id,
+            Name = problem.Name,
+            Description = problem.Description,
+            Level = problem.Level
+        };
+        
+        return Ok(response);
+    }
 }

@@ -53,6 +53,9 @@ public class ProblemsService(IProblemsRepository repository, SolutionsService so
     public async Task<ManyProblemsResponse> GetAll(ProblemsSpec spec, long? userId = null) =>
         await repository.GetAll(spec, userId);
     
+    public async Task<Problem> GetRandomProblemByLevel(ProblemLevel problemLevel) =>
+        await repository.GetRandomProblemByLevel(problemLevel);
+    
     public async Task Update(long userId, long problemId, string? name, string? description, ProblemLevel? problemLevel)
     {
         var isAuthor = await repository.IsUserNotValid(userId, problemId);
