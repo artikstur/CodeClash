@@ -42,7 +42,7 @@ const ErrorNotification: React.FC<ErrorNotificationProps> = ({
   return (
     <Container show={show} isError={isError} onAnimationEnd={() => !show && onClose()}>
       <Content>
-        <FaTimes className="close-icon" onClick={onClose} />
+        {/*<FaTimes className="close-icon" onClick={onClose} />*/}
         {title && <Title isError={isError}>{title}</Title>}
         <Message>{message}</Message>
       </Content>

@@ -37,11 +37,11 @@ export const useTaskSolutionPolling = (solutionId: number | null) => {
 
   return {
     results: data?.data,
-    status: data,
-    isPending: data === 1,
+    status: data?.status,
+    isPending: data?.status === 1,
     isError,
-    isTestSuccess: data === 3,
-    isTestFailed: data === 2,
+    isTestSuccess: data?.status === 3,
+    isTestFailed: data?.status === 2,
     refetch,
   };
 };

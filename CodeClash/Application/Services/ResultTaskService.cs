@@ -25,15 +25,23 @@ public class ResultTaskService(ILogger<ResultTaskService> logger, ISolutionsRepo
                 {
                     await solutionsRepository.UpdateStatus(result.SolutionId, SolutionStatus.Failed);
                 }
-                
+
                 break;
             case TestWorkerStatus.Error:
                 await solutionsRepository.UpdateStatus(result.SolutionId, SolutionStatus.Failed);
+
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
-        
+
+        await solutionsRepository.SetOutput(
+            result.SolutionId, 
+            result.Output?.Trim()?.Length > 10 
+                ? result.Output.Trim().Substring(0, 80) + "..."
+                : result.Output?.Trim()
+        );
+
         logger.LogInformation("Статус задачи успешно изменен");
     }
 }

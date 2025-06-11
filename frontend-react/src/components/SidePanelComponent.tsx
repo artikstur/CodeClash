@@ -17,6 +17,7 @@ type Props = {
   onClose: () => void;
   onStartResize: (e: React.MouseEvent) => void;
   isPolling: boolean;
+  isTaskPolling: boolean;
   solutionResults?: SolutionResult[];
   isTaskSuccess?: boolean;
   isTaskFailed?: boolean;
@@ -35,13 +36,14 @@ const SidePanelComponent = ({
                               onClose,
                               onStartResize,
                               isPolling,
+                              isTaskPolling,
                               solutionResults = [],
                               isTaskSuccess,
                               isTaskFailed,
                             }: Props) => {
   useEffect(() => {
-    console.log(solutionResults);
-  }, [solutionResults]);
+    console.log(isTaskPolling);
+  }, [isTaskPolling]);
 
   return (
     <SidePanel open={open} width={width}>
@@ -78,10 +80,10 @@ const SidePanelComponent = ({
 
       <ButtonRow>
         <ActionButton onClick={onRunTest} disabled={isPolling}>
-          {isPolling ? <Spinner /> : "Отправить тест"}
+          {(isPolling || isTaskPolling) ? <Spinner /> : "Отправить тест"}
         </ActionButton>
         <ActionButton onClick={onSubmitSolution} disabled={isPolling}>
-          {isPolling ? <Spinner /> : "Отправить решение"}
+          {(isPolling || isTaskPolling) ? <Spinner /> : "Отправить решение"}
         </ActionButton>
       </ButtonRow>
       <TestHistory solutionResults={solutionResults} />
@@ -118,7 +120,7 @@ const TestHistory = ({ solutionResults }: { solutionResults: SolutionResult[] })
               <IOWrapper>
                 <IODiv>
                   <IOHeader>Входные данные</IOHeader>
-                  <IOContent>{testCase.input || "(пусто)"}</IOContent>
+                  <IOContent>{testCase.input?.replace('\\n', " ") || "(пусто)"}</IOContent>
                 </IODiv>
                 <IODiv>
                   <IOHeader>Ожидаемый вывод</IOHeader>
@@ -372,6 +374,25 @@ const IODiv = styled.div`
   box-shadow: inset 0 0 5px #000;
   max-height: 100px;
   overflow: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #121212;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #f89797;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a4161a;
+  }
 `;
 
 const IOHeader = styled.div`
@@ -386,6 +407,7 @@ const IOContent = styled.pre<{ isError?: boolean }>`
   white-space: pre-wrap;
   word-break: break-word;
   color: ${({ isError }) => (isError ? "#e63946" : "#a8dadc")};
+  overflow: auto;
 `;
 
 const HistoryWrapper = styled.div`
@@ -398,8 +420,7 @@ const HistoryWrapper = styled.div`
   font-size: 13px;
   max-height: 300px;
   transition: all 0.3s ease;
-
-  /* Тонкий красный скроллбар */
+  
   &::-webkit-scrollbar {
     width: 6px;
     height: 6px;

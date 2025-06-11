@@ -9,6 +9,8 @@ public interface ISolutionsRepository
     
     Task<Solution> Get(long solutionId);
 
+    Task SetOutput(long solutionId, string? output);
+
     Task UpdateStatus(long solutionId, SolutionStatus solutionStatus);
     
     Task<bool> IsAuthor(long userId, long solutionId);

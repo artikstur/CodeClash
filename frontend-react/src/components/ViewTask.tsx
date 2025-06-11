@@ -293,6 +293,7 @@ const ViewTask = ({ problem, onBack, isUser }: { problem: GetProblemResponse; on
         onClose={() => setIsPanelOpen(false)}
         onStartResize={startResizing}
         isPolling={isPolling}
+        isTaskPolling={solutionTaskStatus === 1}
         solutionResults={solutionResults}
         isTaskSuccess={isTaskSuccess}
         isTaskFailed={isTaskFailed}
