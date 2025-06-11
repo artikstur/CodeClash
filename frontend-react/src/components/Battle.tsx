@@ -2,20 +2,31 @@ import React, {useState} from 'react';
 import styled from "styled-components";
 import {useErrorNotification} from "../hooks/useErrorNotification.ts";
 import BattleRoom from "./BattleRoom.tsx";
+import {generateRoomCode} from "../hooks/useRoomCode.ts";
 
+export interface BattleRoomProps {
+  roomCode: string;
+}
 const Battle = () => {
   const [mode, setMode] = useState<"select" | "input" | "room">("select");
-  const [inviteLink, setInviteLink] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [roomCode, setRoomCode] = useState("");
   const { showError, message, show } = useErrorNotification();
 
   const handleJoin = () => {
-    console.log("Введённая ссылка:", inviteLink);
+    if (!inviteCode.trim()) {
+      show("Пожалуйста, введите код приглашения");
+      return;
+    }
+    setRoomCode(inviteCode);
+    setMode("room");
   };
 
   const handleInvite = () => {
-    const link = "https://battle-app/invite/abc123";
-    navigator.clipboard.writeText(link).then(() => {
-      show("Ссылка скопирована в буфер обмена");
+    const newCode = generateRoomCode();
+    setRoomCode(newCode);
+    navigator.clipboard.writeText(newCode).then(() => {
+      show("Код приглашения скопирован в буфер обмена");
       setMode("room");
     });
   };
@@ -23,21 +34,22 @@ const Battle = () => {
   return (
     <BattleWrapper>
       {mode === "room" ? (
-        <BattleRoom />
+        <BattleRoom roomCode={roomCode} />
       ) : (
         <BattleCard>
           {mode === "select" ? (
             <>
-              <Button onClick={() => setMode("input")}>Войти по ссылке</Button>
-              <Button onClick={handleInvite}>Пригласить участника</Button>
+              <Button onClick={() => setMode("input")}>Войти по коду</Button>
+              <Button onClick={handleInvite}>Создать комнату</Button>
             </>
           ) : (
             <>
               <Input
                 type="text"
-                placeholder="Введите ссылку"
-                value={inviteLink}
-                onChange={(e) => setInviteLink(e.target.value)}
+                placeholder="Введите код комнаты"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                maxLength={6}
               />
               <Button onClick={handleJoin}>Войти</Button>
               <BackButton onClick={() => setMode("select")}>Назад</BackButton>

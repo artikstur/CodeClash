@@ -3,21 +3,75 @@ import SolveProblemTogether from "./SolveProblemTogether.tsx";
 import React, {useEffect, useState} from "react";
 import type {GetProblemResponse} from "../interfaces/api/responses/GetProblemsResponse.ts";
 import {useErrorNotification} from "../hooks/useErrorNotification.ts";
+import {useBattleHub} from "../hooks/api/useBattleHub.ts";
+import {useUserStats} from "../hooks/api/useUserStats.ts";
+import type {BattleRoomProps} from "./Battle.tsx";
+import { FiCheck } from "react-icons/fi";
 
-const BattleRoom = () => {
+const BattleRoom = ({ roomCode }: BattleRoomProps) => {
   const { showError, message, show } = useErrorNotification();
-  const handleInvite = () => {
-    const link = "https://battle-app/invite/abc123";
-    navigator.clipboard.writeText(link).then(() => {
-      show("Ссылка скопирована в буфер обмена");
+  const [opponentNickname, setOpponentNickname] = useState<string | null>(null);
+  const [opponentReady, setOpponentReady] = useState(false);
+  const [myReady, setMyReady] = useState(false);
+  const { data, isLoading, error } = useUserStats();
+  const connection = useBattleHub(roomCode, data?.userName);
+
+  useEffect(() => {
+    if (!connection) return;
+
+    setOpponentNickname(null);
+    setOpponentReady(false);
+    setMyReady(false);
+
+    connection.on("UserJoined", (id, nickname) => {
+      console.log(id, nickname)
+      if (nickname !== data?.userName) {
+        setOpponentNickname(nickname);
+        console.log("set")
+      }
     });
+
+    connection.on("UserLeft", (id, nickname) => {
+      if (nickname !== data?.userName) {
+        setOpponentNickname(null);
+        setOpponentReady(false);
+      }
+    });
+
+    connection.on("ReceiveReadyStatus", (id, nickname, isReady) => {
+      if (nickname !== data?.userName) {
+        setOpponentReady(isReady);
+      }
+    });
+
+    connection.on("StartGame", () => {
+      handleStart();
+    });
+
+    return () => {
+      connection.off("UserJoined");
+      connection.off("UserLeft");
+      connection.off("ReceiveReadyStatus");
+      connection.off("StartGame");
+    };
+  }, [connection]);
+
+  const handleReadyClick = () => {
+    setMyReady(true);
+    connection?.invoke("SendReadyStatus", roomCode, data?.userName, true);
   };
 
   useEffect(() => {
-    handleInvite();
-  }, []);
-  const myNickname = "MyNickname";
-  const opponentNickname = "";
+    if (myReady && opponentReady) {
+      connection?.invoke("StartGame", roomCode);
+    }
+  }, [myReady, opponentReady]);
+
+  const handleInvite = () => {
+    navigator.clipboard.writeText(roomCode).then(() => {
+      show("Код скопирован в буфер обмена");
+    });
+  };
 
   const problems: GetProblemResponse[] = [
     {
@@ -71,12 +125,36 @@ const BattleRoom = () => {
     <>
       <BattleRoomCard>
         <NickRow>
-          <Nickname>{myNickname}</Nickname>
-          <Nickname>{opponentNickname || "Ожидание соперника..."}</Nickname>
+          <Nickname>{data?.userName}</Nickname>
+          <Nickname>
+            {opponentNickname ? `Гость: ${opponentNickname}` : "Ожидание соперника..."}
+          </Nickname>
         </NickRow>
         <ReadyRow>
-          <ReadyButton>Готов</ReadyButton>
-          <ReadyButton>Готов</ReadyButton>
+          <ReadyButton onClick={handleReadyClick} disabled={myReady} ready={myReady}>
+            {myReady ? (
+              <>
+                <FiCheck />
+                Готов
+              </>
+            ) : (
+              "Готов"
+            )}
+          </ReadyButton>
+
+          <ReadyButton disabled ready={opponentReady}>
+            {opponentReady ? (
+              <>
+                <FiCheck />
+                Готов
+              </>
+            ) : opponentNickname ? (
+              "Ожидание..."
+            ) : (
+              "Нет соперника"
+            )}
+          </ReadyButton>
+
         </ReadyRow>
         <StartButton onClick={handleStart}>Старт</StartButton>
       </BattleRoomCard>
@@ -90,9 +168,59 @@ const BattleRoom = () => {
         </ModalBackdrop>
       )}
       {showError && <Toast visible={showError}>{message}</Toast>}
+
+      {roomCode && (
+        <RoomCodeCard>
+          <div>
+            <RoomCodeLabel>Код комнаты:</RoomCodeLabel>
+            <RoomCodeValue>{roomCode}</RoomCodeValue>
+          </div>
+          <CopyButton onClick={handleInvite}>Скопировать</CopyButton>
+        </RoomCodeCard>
+      )}
     </>
   );
 };
+
+const RoomCodeCard = styled.div`
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  background-color: #1a1a1a;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1000;
+`;
+
+const RoomCodeLabel = styled.div`
+  font-size: 0.9rem;
+  opacity: 0.8;
+`;
+
+const RoomCodeValue = styled.div`
+  font-weight: bold;
+  font-size: 1.1rem;
+`;
+
+const CopyButton = styled.button`
+  background-color: #a4161a;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+
+  &:hover {
+    background-color: #d62828;
+  }
+`;
 
 const Toast = styled.div<{ visible?: boolean }>`
   position: fixed;
@@ -181,8 +309,24 @@ const ReadyRow = styled.div`
     gap: 2rem;
 `;
 
-const ReadyButton = styled(Button)`
-    flex: 1;
+const ReadyButton = styled(Button)<{ ready?: boolean }>`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  opacity: ${({ ready }) => (ready ? 0.85 : 1)};
+  background: ${({ ready }) =>
+          ready
+                  ? "linear-gradient(90deg, #70e000, #38b000)"
+                  : "linear-gradient(90deg, #d62828, #a4161a)"};
+
+  &:hover {
+    background: ${({ ready }) =>
+            ready
+                    ? "linear-gradient(90deg, #70e000cc, #38b000cc)"
+                    : "linear-gradient(90deg, #d62828cc, #a4161acc)"};
+  }
 `;
 
 const StartButton = styled(Button)`

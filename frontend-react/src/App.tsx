@@ -21,9 +21,9 @@ function App() {
           <Route
             path="/main"
             element={
-              <ProtectedRoute>
+              // <ProtectedRoute>
                 <MainPage />
-              </ProtectedRoute>
+              // </ProtectedRoute>
             }
           />
           <Route path="*" element={<NotFoundPage />} />

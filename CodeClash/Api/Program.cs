@@ -2,6 +2,7 @@ using Api;
 using Api.Auth;
 using Api.Configuration;
 using Api.Configuration.Swagger;
+using Api.Hubs;
 using Api.MIddlewares;
 using Application.Interfaces;
 using Application.Interfaces.Auth;
@@ -28,6 +29,7 @@ var services = builder.Services;
 services.AddApiAuthentication(configuration);
 services.AddControllers();
 services.AddEndpointsApiExplorer();
+builder.Services.AddSignalR();   
 builder.Services.AddSwaggerGen(x =>
 {
     x.SchemaFilter<DefaultSchemaFilter>();
@@ -95,6 +97,7 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<UserDataLoggingMiddleware>();
+app.MapHub<BattleHub>("/battlehub");
 app.UseSerilogRequestLogging(opts =>
 {
     opts.MessageTemplate = "Завершена обработка: {RequestPath} {StatusCode} in {Elapsed:0.0000} ms [EmailHash: {EmailHash}]";
