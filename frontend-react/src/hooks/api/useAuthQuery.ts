@@ -10,8 +10,6 @@ const fetchAuthCheck = async () => {
   if (!response.ok) {
     throw new Error("Not authorized");
   }
-
-  return response.json();
 };
 
 export const useAuthQuery = () =>

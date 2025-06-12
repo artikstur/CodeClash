@@ -20,11 +20,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/main"
-            element={
-              // <ProtectedRoute>
-                <MainPage />
-              // </ProtectedRoute>
-            }
+            element={<MainPage />}
           />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

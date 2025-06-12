@@ -60,6 +60,7 @@ public class UsersController(UsersService usersService, IOptions<JwtOptions> opt
         return Ok();
     }
     
+    [Authorize]
     [HttpGet("stats")]
     [UserIdFilter]
     public async Task<IActionResult> GetUserData()
@@ -77,14 +78,10 @@ public class UsersController(UsersService usersService, IOptions<JwtOptions> opt
         return Ok(response);
     }
     
+    [Authorize]
     [HttpGet("check")]
     public async Task<IActionResult> Check()
     {
-        if (User.Identity?.IsAuthenticated == true)
-        {
-            return Ok();
-        }
-
-        return Unauthorized();
+        return Ok();
     }
 }
