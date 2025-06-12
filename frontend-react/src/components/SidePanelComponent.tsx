@@ -92,8 +92,8 @@ const SidePanelComponent = ({
   );
 };
 
-const TestHistory = ({ solutionResults }: { solutionResults: SolutionResult[] }) => {
-  if (!solutionResults.length) {
+export const TestHistory = ({ solutionResults }: { solutionResults: SolutionResult[] }) => {
+  if (!solutionResults?.length) {
     return <HistoryEmpty>История тестов пуста</HistoryEmpty>;
   }
 

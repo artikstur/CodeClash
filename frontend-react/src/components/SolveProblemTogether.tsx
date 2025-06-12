@@ -3,8 +3,10 @@ import styled, {keyframes} from "styled-components";
 import type { GetProblemResponse } from "../interfaces/api/responses/GetProblemsResponse.ts";
 import { useGetTestCases } from "../hooks/api/useGetTestCases.ts";
 import { FaBolt, FaPaperPlane } from "react-icons/fa";
-import { LinearProgress, Box, Typography } from "@mui/material";
-
+import { Box, Typography } from "@mui/material";
+import {useTaskSolutionPolling} from "../hooks/api/useTaskSolutionPolling.ts";
+import {usePostTaskSolution} from "../hooks/api/usePostTaskSolution.ts";
+import {TestHistory} from "./SidePanelComponent.tsx";
 
 const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
   const { data: testCases = [], isLoading: isLoadingTests } = useGetTestCases(problem.id);
@@ -15,6 +17,30 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
 
   const [progress, setProgress] = useState(70);
   const [opponentProgress, setOpponentProgress] = useState(80);
+
+  const { mutate: sendTaskSolution} = usePostTaskSolution();
+  const [solutionTaskId, setSolutionTaskId] = useState<number | null>(null);
+  const {
+    status: solutionTaskStatus,
+    isPending: isTaskPolling,
+    isError: isTaskPollError,
+    isTaskSuccess,
+    isTaskFailed,
+    results: solutionResults,
+  } = useTaskSolutionPolling(solutionTaskId);
+
+  const handleSubmitSolution = () => {
+    sendTaskSolution(
+      { problemId: problem.id, code },
+      {
+        onSuccess: (returnedSolutionId) => {
+          setSolutionTaskId(returnedSolutionId);
+        },
+      }
+    );
+
+    setSolutionTaskId(null);
+  };
 
   return (
     <Wrapper>
@@ -96,10 +122,20 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
               spellCheck={false}
             />
           </EditorContainer>
-          <SubmitButton onClick={() => console.log("Отправка кода:", code)}>
-            <FaPaperPlane style={{ marginRight: "0.5rem" }} />
-            Отправить
-          </SubmitButton>
+          <HistoryWrapper>
+            <TestHistory solutionResults={solutionResults}/>
+            <SubmitButton onClick={handleSubmitSolution}>
+              {solutionTaskId === null
+                ?
+                  <Spinner />
+                :
+                 <>
+                   <FaPaperPlane style={{ marginRight: "0.5rem" }} />
+                   Отправить решение
+                 </>
+              }
+            </SubmitButton>
+          </HistoryWrapper>
         </EditorPanel>
       )}
     </Wrapper>
@@ -119,6 +155,21 @@ const AnimatedProgress = ({ value }: { value: number }) => {
     </ProgressWrapper>
   );
 };
+
+const Spinner = styled.div`
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 0.6s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 const fillAnimation = (from: number, to: number) => keyframes`
   from {
@@ -144,6 +195,14 @@ const ProgressWrapper = styled.div`
   width: 100%;
 `;
 
+const HistoryWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 500px;
+`;
+
 const Button = styled.button`
   background-color: #a4161a;
   color: white;
@@ -164,12 +223,13 @@ const EditorPanel = styled.div`
   right: 0;
   top: 0;
   width: 700px;
-  height: 100vh;
+  height: 100%;
   background-color: #1a1a1a;
   border-left: 2px solid #a4161a;
   padding: 1rem;
   box-shadow: -2px 0 10px rgba(164, 22, 26, 0.3);
   display: flex;
+  justify-content: space-between;
   flex-direction: column;
   z-index: 1000;
 `;
@@ -203,6 +263,7 @@ const EditorContainer = styled.div`
   overflow: hidden;
   box-shadow: 0 0 10px rgba(164, 22, 26, 0.3);
   flex: 1;
+  max-height: 600px;
 `;
 
 const LineNumbers = styled.div`
@@ -255,7 +316,7 @@ const Wrapper = styled.div`
   justify-content: center;
   align-items: start;
   box-shadow: 0 0 20px rgba(164, 22, 26, 0.5);
-  height: 100%;
+  height: 100vh;
   border-radius: 10px;
 `;
 
@@ -331,6 +392,7 @@ const TestDetails = styled.div`
   padding: 1rem;
   border-radius: 12px;
   border: 0.1px solid #ffffff;
+  height: 280px;
 `;
 
 const CodeBlock = styled.pre`
