@@ -67,4 +67,9 @@ public class BattleHub : Hub
     {
         await Clients.Group(roomCode).SendAsync("DifficultyUpdated", level);
     }
+    
+    public async Task UpdateProgress(string roomCode, int progress, string nickname)
+    {
+        await Clients.Group(roomCode).SendAsync("ReceiveProgressUpdate", nickname, progress);
+    }
 }

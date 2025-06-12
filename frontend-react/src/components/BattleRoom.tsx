@@ -109,7 +109,11 @@ const BattleRoom = ({roomCode, isCreator}: BattleRoomProps) => {
   };
 
   if (showSolveComponent && currentProblem) {
-    return <SolveProblemTogether problem={currentProblem}/>;
+    return <SolveProblemTogether
+      nickname={data.userName}
+      roomCode={roomCode}
+      problem={currentProblem}
+      connection={connection}/>;
   }
 
   return (

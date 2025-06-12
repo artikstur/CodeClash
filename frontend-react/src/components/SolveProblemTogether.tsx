@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import styled, {keyframes} from "styled-components";
 import type { GetProblemResponse } from "../interfaces/api/responses/GetProblemsResponse.ts";
 import { useGetTestCases } from "../hooks/api/useGetTestCases.ts";
@@ -7,16 +7,18 @@ import { Box, Typography } from "@mui/material";
 import {useTaskSolutionPolling} from "../hooks/api/useTaskSolutionPolling.ts";
 import {usePostTaskSolution} from "../hooks/api/usePostTaskSolution.ts";
 import {TestHistory} from "./SidePanelComponent.tsx";
+import {HubConnection} from "@microsoft/signalr";
 
-const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
+const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
+                                { problem: GetProblemResponse, connection: HubConnection | null, roomCode: string, nickname: string }) => {
   const { data: testCases = [], isLoading: isLoadingTests } = useGetTestCases(problem.id);
   const [activeTestIndex, setActiveTestIndex] = useState(0);
   const activeTest = testCases[activeTestIndex];
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [code, setCode] = useState("");
 
-  const [progress, setProgress] = useState(70);
-  const [opponentProgress, setOpponentProgress] = useState(80);
+  const [progress, setProgress] = useState(0);
+  const [opponentProgress, setOpponentProgress] = useState(0);
 
   const { mutate: sendTaskSolution} = usePostTaskSolution();
   const [solutionTaskId, setSolutionTaskId] = useState<number | null>(null);
@@ -28,6 +30,15 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
     isTaskFailed,
     results: solutionResults,
   } = useTaskSolutionPolling(solutionTaskId);
+
+  useEffect(() => {
+    if (solutionResults && solutionResults.length > 0) {
+      const passedCount = solutionResults.filter(r => r.solution.solutionStatus === 3).length;
+      const totalCount = solutionResults.length;
+      const progressPercent = Math.round((passedCount / totalCount) * 100);
+      setProgress(progressPercent);
+    }
+  }, [solutionResults]);
 
   const handleSubmitSolution = () => {
     sendTaskSolution(
@@ -41,6 +52,22 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
 
     setSolutionTaskId(null);
   };
+
+  useEffect(() => {
+    if (!connection) return;
+
+    connection.on("ReceiveProgressUpdate", (oppNickname, oppProgress) => {
+      if (oppNickname !== nickname) {
+        setOpponentProgress(oppProgress)
+      }
+    });
+  }, [connection]);
+
+  useEffect(() => {
+    if (connection && progress !== 0) {
+      connection.invoke("UpdateProgress", roomCode, progress, nickname);
+    }
+  }, [progress]);
 
   return (
     <Wrapper>
@@ -58,9 +85,6 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
             Прогресс выполнения: {progress}%
           </Typography>
           <AnimatedProgress value={progress} />
-          {/*<Button style={{ marginTop: "1rem" }} onClick={() => setProgress(progress === 70 ? 30 : 70)}>*/}
-          {/*  Сменить прогресс*/}
-          {/*</Button>*/}
         </Box>
 
         <Box sx={{ width: "100%", mt: 3 }}>
@@ -68,9 +92,6 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
             Прогресс соперника: {opponentProgress}%
           </Typography>
           <AnimatedProgress value={opponentProgress} />
-          {/*<Button style={{ marginTop: "1rem" }} onClick={() => setOpponentProgress(opponentProgress === 80 ? 20 : 80)}>*/}
-          {/*  Сменить прогресс соперника*/}
-          {/*</Button>*/}
         </Box>
 
         <Description>{problem.description}</Description>
@@ -125,7 +146,7 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
           <HistoryWrapper>
             <TestHistory solutionResults={solutionResults}/>
             <SubmitButton onClick={handleSubmitSolution}>
-              {solutionTaskId === null
+              {isTaskPolling
                 ?
                   <Spinner />
                 :
