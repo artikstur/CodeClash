@@ -16,7 +16,6 @@ public class TestCasesController(TestCasesService testCasesService, IMapper mapp
 {
     [HttpPost("{testId:long}/AddNewForOneTask")]
     [UserIdFilter]
-    // [EntityExistenceFilter(typeof(TestCaseEntity), "testId")]
     public async Task<IActionResult> SolveTest(long testId, [FromBody] SolveRequest request)
     {
         var userId = (long)HttpContext.Items["userId"]!;
@@ -64,10 +63,9 @@ public class TestCasesController(TestCasesService testCasesService, IMapper mapp
     
     [HttpGet("{problemId:long}")]
     [UserIdFilter]
-    //[EntityExistenceFilter(typeof(ProblemEntity), "problemId")]
     public async Task<IActionResult> GetByProblem(long problemId)
     {
-            var userId = (long)HttpContext.Items["userId"]!;
+        var userId = (long)HttpContext.Items["userId"]!;
         logger.LogInformation($"Пользователь {userId} запрашивает все тест-кейсы для задачи {problemId}");
 
         var testCases = await testCasesService.GetByProblemId(userId, problemId);

@@ -9,6 +9,7 @@ import {FiCheck} from "react-icons/fi";
 import {getProblemForBattle} from "../hooks/api/useProblemsByLevel.ts";
 import type {ProblemLevel} from "../interfaces/api/enums/ProblemLevel.ts";
 import type {GetProblemResponse} from "../interfaces/api/responses/GetProblemsResponse.ts";
+import ViewTask from "./ViewTask.tsx";
 
 const BattleRoom = ({roomCode, isCreator}: BattleRoomProps) => {
   const {showError, message, show} = useErrorNotification();

@@ -34,8 +34,8 @@ public class TestCasesService(ITestCasesRepository testCasesRepository, IProblem
 
     public async Task<ICollection<TestCase>> GetByProblemId(long userId, long problemId)
     {
-        var isAuthor = await problemsRepository.IsUserNotValid(userId, problemId);
-        RaiseValidationException(isAuthor);
+        // var isAuthor = await problemsRepository.IsUserNotValid(userId, problemId);
+        // RaiseValidationException(isAuthor);
         
         return await testCasesRepository.GetByProblemId(problemId);
     }
