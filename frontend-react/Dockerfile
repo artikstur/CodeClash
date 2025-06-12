@@ -4,6 +4,7 @@ WORKDIR /app
 COPY pnpm-lock.yaml ./
 COPY package.json ./
 RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN pnpm config set registry https://registry.npmmirror.com
 RUN pnpm install
 
 COPY . .
