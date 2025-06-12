@@ -194,7 +194,13 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname, setMode
       {showWinnerModal && (
         <WinnerOverlay>
           <WinnerCard>
-            <h2>{winner === nickname ? `🎉 Вы победили! ${comment}` : `Победил ${winner}`}</h2>
+            <h2>
+              {winner === null || winner === ''
+                ? 'Паритет. Оба Игрока набрали одинаковое количество очков'
+                : winner === nickname
+                  ? `🎉 Вы победили! ${comment}`
+                  : `Победил ${winner}`}
+            </h2>
             <CloseButton onClick={() => setMode("select")}>Закрыть</CloseButton>
           </WinnerCard>
         </WinnerOverlay>
