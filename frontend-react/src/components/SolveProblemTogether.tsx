@@ -9,8 +9,8 @@ import {usePostTaskSolution} from "../hooks/api/usePostTaskSolution.ts";
 import {TestHistory} from "./SidePanelComponent.tsx";
 import {HubConnection} from "@microsoft/signalr";
 
-const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
-                                { problem: GetProblemResponse, connection: HubConnection | null, roomCode: string, nickname: string }) => {
+const SolveProblemTogether = ({ problem, connection, roomCode, nickname, setMode }:
+                                { problem: GetProblemResponse, connection: HubConnection | null, roomCode: string, nickname: string, setMode: () => void; }) => {
   const { data: testCases = [], isLoading: isLoadingTests } = useGetTestCases(problem.id);
   const [activeTestIndex, setActiveTestIndex] = useState(0);
   const activeTest = testCases[activeTestIndex];
@@ -19,8 +19,9 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
   const [progress, setProgress] = useState(0);
   const [opponentProgress, setOpponentProgress] = useState(0);
 
-  const [timer, setTimer] = useState<number>(10);
+  const [timer, setTimer] = useState<number>(30);
   const [winner, setWinner] = useState<string | null>(null);
+  const [comment, setComment] = useState<string | null>(null);
   const [showWinnerModal, setShowWinnerModal] = useState(false);
 
   const { mutate: sendTaskSolution} = usePostTaskSolution();
@@ -70,10 +71,14 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
       setTimer(seconds);
     });
 
-    connection.on("GameOver", (winnerNickname: string | null) => {
+    connection.on("GameOver", (winnerNickname: string | null, comment: string | null) => {
       console.log(winnerNickname)
       setWinner(winnerNickname);
       setShowWinnerModal(true);
+
+      if (comment !== null) {
+        setComment(comment);
+      }
     });
   }, [connection]);
 
@@ -189,8 +194,8 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
       {showWinnerModal && (
         <WinnerOverlay>
           <WinnerCard>
-            <h2>{winner === nickname ? "🎉 Вы победили!" : `Победил ${winner}`}</h2>
-            <CloseButton onClick={() => setShowWinnerModal(false)}>Закрыть</CloseButton>
+            <h2>{winner === nickname ? `🎉 Вы победили! ${comment}` : `Победил ${winner}`}</h2>
+            <CloseButton onClick={() => setMode("select")}>Закрыть</CloseButton>
           </WinnerCard>
         </WinnerOverlay>
       )}

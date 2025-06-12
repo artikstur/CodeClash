@@ -9,9 +9,8 @@ import {FiCheck} from "react-icons/fi";
 import {getProblemForBattle} from "../hooks/api/useProblemsByLevel.ts";
 import type {ProblemLevel} from "../interfaces/api/enums/ProblemLevel.ts";
 import type {GetProblemResponse} from "../interfaces/api/responses/GetProblemsResponse.ts";
-import ViewTask from "./ViewTask.tsx";
 
-const BattleRoom = ({roomCode, isCreator}: BattleRoomProps) => {
+const BattleRoom = ({roomCode, isCreator, setMode}: BattleRoomProps) => {
   const {showError, message, show} = useErrorNotification();
   const [opponentNickname, setOpponentNickname] = useState<string | null>(null);
   const [opponentReady, setOpponentReady] = useState(false);
@@ -110,6 +109,7 @@ const BattleRoom = ({roomCode, isCreator}: BattleRoomProps) => {
 
   if (showSolveComponent && currentProblem) {
     return <SolveProblemTogether
+      setMode={setMode}
       nickname={data.userName}
       roomCode={roomCode}
       problem={currentProblem}

@@ -6,23 +6,42 @@ namespace Api.Hubs;
 
 public class BattleHub : Hub
 {
-    private static ConcurrentDictionary<string, List<string>> Rooms = new();
-    private static ConcurrentDictionary<string, string> ConnectionNicknames = new();
-    private static ConcurrentDictionary<string, GetProblemResponse> RoomProblems = new();
-    private static ConcurrentDictionary<string, int> RoomTimers = new();
-    private static ConcurrentDictionary<string, CancellationTokenSource> RoomTimerTokens = new();
-    private static ConcurrentDictionary<string, Dictionary<string, int>> RoomProgresses = new();
+    private static readonly ConcurrentDictionary<string, List<string>> _rooms = new();
+    private static readonly ConcurrentDictionary<string, string> _connectionNicknames = new();
+    private static readonly ConcurrentDictionary<string, GetProblemResponse> _roomProblems = new();
+    private static readonly ConcurrentDictionary<string, int> _roomTimers = new();
+    private static readonly ConcurrentDictionary<string, CancellationTokenSource> _roomTimerTokens = new();
+    private static readonly ConcurrentDictionary<string, Dictionary<string, int>> _roomProgresses = new();
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (ConnectionNicknames.TryRemove(Context.ConnectionId, out var nickname))
+        if (_connectionNicknames.TryRemove(Context.ConnectionId, out var nickname))
         {
-            foreach (var room in Rooms)
+            foreach (var kvp in _rooms)
             {
-                if (room.Value.Contains(Context.ConnectionId))
+                var roomCode = kvp.Key;
+                var connections = kvp.Value;
+
+                if (!connections.Contains(Context.ConnectionId)) continue;
+                connections.Remove(Context.ConnectionId);
+                await Clients.Group(roomCode).SendAsync("UserLeft", Context.ConnectionId, nickname);
+                    
+                switch (connections.Count)
                 {
-                    room.Value.Remove(Context.ConnectionId);
-                    await Clients.Group(room.Key).SendAsync("UserLeft", Context.ConnectionId, nickname);
+                    case 0:
+                        CleanupRoom(roomCode);
+                        break;
+                    case 1:
+                    {
+                        var remainingConnId = connections.First();
+                        if (_connectionNicknames.TryGetValue(remainingConnId, out var winnerNickname))
+                        {
+                            await Clients.Group(roomCode).SendAsync("GameOver", winnerNickname, "Противник отключился");
+                            CleanupRoom(roomCode);
+                        }
+
+                        break;
+                    }
                 }
             }
         }
@@ -34,14 +53,14 @@ public class BattleHub : Hub
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
 
-        if (!Rooms.ContainsKey(roomCode))
+        if (!_rooms.ContainsKey(roomCode))
         {
-            Rooms[roomCode] = new List<string>();
+            _rooms[roomCode] = new List<string>();
         }
 
-        var existingUsers = Rooms[roomCode]
+        var existingUsers = _rooms[roomCode]
             .Where(connId => connId != Context.ConnectionId)
-            .Select(connId => new { ConnectionId = connId, Nickname = ConnectionNicknames[connId] })
+            .Select(connId => new { ConnectionId = connId, Nickname = _connectionNicknames[connId] })
             .ToList();
 
         foreach (var user in existingUsers)
@@ -49,8 +68,8 @@ public class BattleHub : Hub
             await Clients.Caller.SendAsync("UserJoined", user.ConnectionId, user.Nickname);
         }
 
-        Rooms[roomCode].Add(Context.ConnectionId);
-        ConnectionNicknames[Context.ConnectionId] = nickname;
+        _rooms[roomCode].Add(Context.ConnectionId);
+        _connectionNicknames[Context.ConnectionId] = nickname;
 
         await Clients.Group(roomCode).SendAsync("UserJoined", Context.ConnectionId, nickname);
     }
@@ -67,16 +86,16 @@ public class BattleHub : Hub
     
     public async Task StartGame(string roomCode, GetProblemResponse problem)
     {
-        RoomProblems[roomCode] = problem;
-        RoomProgresses[roomCode] = new();
+        _roomProblems[roomCode] = problem;
+        _roomProgresses[roomCode] = new();
         
-        if (RoomTimerTokens.TryGetValue(roomCode, out var existingCts))
+        if (_roomTimerTokens.TryGetValue(roomCode, out var existingCts))
         {
             existingCts.Cancel();
         }
 
         var cts = new CancellationTokenSource();
-        RoomTimerTokens[roomCode] = cts;
+        _roomTimerTokens[roomCode] = cts;
 
         await Clients.Group(roomCode).SendAsync("StartGame", problem);
         
@@ -85,8 +104,8 @@ public class BattleHub : Hub
 
     private async Task StartCountdown(string roomCode, CancellationToken token)
     {
-        int seconds = 10;
-        RoomTimers[roomCode] = seconds;
+        int seconds = 30;
+        _roomTimers[roomCode] = seconds;
 
         while (seconds > 0 && !token.IsCancellationRequested)
         {
@@ -105,27 +124,29 @@ public class BattleHub : Hub
 
     public async Task UpdateProgress(string roomCode, int progress, string nickname)
     {
-        if (!RoomProgresses.ContainsKey(roomCode))
-            RoomProgresses[roomCode] = new();
+        if (!_roomProgresses.ContainsKey(roomCode))
+            _roomProgresses[roomCode] = new();
 
-        RoomProgresses[roomCode][nickname] = progress;
+        _roomProgresses[roomCode][nickname] = progress;
 
         await Clients.Group(roomCode).SendAsync("ReceiveProgressUpdate", nickname, progress);
 
         if (progress >= 100)
         {
-            if (RoomTimerTokens.TryGetValue(roomCode, out var cts))
+            if (_roomTimerTokens.TryGetValue(roomCode, out var cts))
             {
                 cts.Cancel();
             }
 
             await Clients.Group(roomCode).SendAsync("GameOver", nickname);
+
+            CleanupRoom(roomCode);
         }
     }
 
     private async Task DecideWinner(string roomCode)
     {
-        if (!RoomProgresses.TryGetValue(roomCode, out var progresses) || progresses.Count == 0)
+        if (!_roomProgresses.TryGetValue(roomCode, out var progresses) || progresses.Count == 0)
         {
             await Clients.Group(roomCode).SendAsync("GameOver", null);
             return;
@@ -133,5 +154,31 @@ public class BattleHub : Hub
 
         var winner = progresses.OrderByDescending(p => p.Value).First();
         await Clients.Group(roomCode).SendAsync("GameOver", winner.Key); 
+        
+        CleanupRoom(roomCode);
+    }
+    
+    private void CleanupRoom(string roomCode)
+    {
+        _rooms.TryRemove(roomCode, out _);
+        _roomProblems.TryRemove(roomCode, out _);
+        _roomTimers.TryRemove(roomCode, out _);
+    
+        if (_roomTimerTokens.TryRemove(roomCode, out var cts))
+        {
+            cts.Dispose();
+        }
+
+        _roomProgresses.TryRemove(roomCode, out _);
+        
+        var connectionIdsToRemove = _connectionNicknames
+            .Where(kvp => _rooms.TryGetValue(roomCode, out var list) && list.Contains(kvp.Key))
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var connId in connectionIdsToRemove)
+        {
+            _connectionNicknames.TryRemove(connId, out _);
+        }
     }
 }

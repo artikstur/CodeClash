@@ -7,6 +7,7 @@ import {generateRoomCode} from "../hooks/useRoomCode.ts";
 export interface BattleRoomProps {
   roomCode: string;
   isCreator: boolean;
+  setMode: (mode: "select" | "input" | "room") => void
 }
 const Battle = () => {
   const [mode, setMode] = useState<"select" | "input" | "room">("select");
@@ -38,7 +39,7 @@ const Battle = () => {
   return (
     <BattleWrapper>
       {mode === "room" ? (
-        <BattleRoom roomCode={roomCode} isCreator={isCreator}/>
+        <BattleRoom roomCode={roomCode} isCreator={isCreator} setMode={setMode}/>
       ) : (
         <BattleCard>
           {mode === "select" ? (
