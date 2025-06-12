@@ -16,9 +16,12 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
   const activeTest = testCases[activeTestIndex];
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [code, setCode] = useState("");
-
   const [progress, setProgress] = useState(0);
   const [opponentProgress, setOpponentProgress] = useState(0);
+
+  const [timer, setTimer] = useState<number>(10);
+  const [winner, setWinner] = useState<string | null>(null);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
 
   const { mutate: sendTaskSolution} = usePostTaskSolution();
   const [solutionTaskId, setSolutionTaskId] = useState<number | null>(null);
@@ -52,8 +55,6 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
         },
       }
     );
-
-    setSolutionTaskId(null);
   };
 
   useEffect(() => {
@@ -63,6 +64,16 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
       if (oppNickname !== nickname) {
         setOpponentProgress(oppProgress)
       }
+    });
+
+    connection.on("TimerUpdate", (seconds: number) => {
+      setTimer(seconds);
+    });
+
+    connection.on("GameOver", (winnerNickname: string | null) => {
+      console.log(winnerNickname)
+      setWinner(winnerNickname);
+      setShowWinnerModal(true);
     });
   }, [connection]);
 
@@ -75,6 +86,19 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
   return (
     <Wrapper>
       <ProblemCard>
+        <Box sx={{ mt: 2 }}>
+          <TimerWrapper>
+            <TimeBar value={timer} max={10} />
+            <TimeText>{timer} сек.</TimeText>
+          </TimerWrapper>
+        </Box>
+        {winner && (
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="h5" color={winner === nickname ? 'lightgreen' : 'orange'}>
+              {winner === nickname ? '🎉 Вы победили!' : `Победил ${winner}`}
+            </Typography>
+          </Box>
+        )}
         <Title>
           <FaBolt color="#a4161a" style={{ marginRight: "0.5rem" }} />
           {problem.name}
@@ -162,9 +186,86 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
           </HistoryWrapper>
         </EditorPanel>
       )}
+      {showWinnerModal && (
+        <WinnerOverlay>
+          <WinnerCard>
+            <h2>{winner === nickname ? "🎉 Вы победили!" : `Победил ${winner}`}</h2>
+            <CloseButton onClick={() => setShowWinnerModal(false)}>Закрыть</CloseButton>
+          </WinnerCard>
+        </WinnerOverlay>
+      )}
     </Wrapper>
   );
 };
+
+const TimerWrapper = styled.div`
+  position: relative;
+  height: 20px;
+  width: 100%;
+  background: #222;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+`;
+
+const TimeBar = styled.div<{ value: number; max: number }>`
+  width: ${({ value, max }) => (value / max) * 100}%;
+  height: 100%;
+  background: ${({ value }) =>
+  value > 5 ? "#70e000" : value > 3 ? "#f48c06" : "#d00000"};
+  transition: width 1s linear;
+`;
+
+const TimeText = styled.div`
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-weight: bold;
+  font-size: 0.95rem;
+  line-height: 20px;
+`;
+
+const WinnerOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2000;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const WinnerCard = styled.div`
+  background: #1a1a1a;
+  border: 3px solid #a4161a;
+  padding: 3rem;
+  border-radius: 20px;
+  text-align: center;
+  color: white;
+  animation: showModal 0.5s ease-out;
+
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #f48c06;
+  }
+
+  @keyframes showModal {
+    from {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`;
 
 const AnimatedProgress = ({ value }: { value: number }) => {
   const [prevValue, setPrevValue] = useState(value);
