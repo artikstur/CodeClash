@@ -420,6 +420,7 @@ const HistoryWrapper = styled.div`
   font-size: 13px;
   max-height: 300px;
   transition: all 0.3s ease;
+  width: 100%;
   
   &::-webkit-scrollbar {
     width: 6px;

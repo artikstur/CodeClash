@@ -36,7 +36,10 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
       const passedCount = solutionResults.filter(r => r.solution.solutionStatus === 3).length;
       const totalCount = solutionResults.length;
       const progressPercent = Math.round((passedCount / totalCount) * 100);
-      setProgress(progressPercent);
+
+      if (progressPercent > progress) {
+        setProgress(progressPercent);
+      }
     }
   }, [solutionResults]);
 
@@ -146,12 +149,12 @@ const SolveProblemTogether = ({ problem, connection, roomCode, nickname }:
           <HistoryWrapper>
             <TestHistory solutionResults={solutionResults}/>
             <SubmitButton onClick={handleSubmitSolution}>
-              {isTaskPolling
+              {isTaskPolling || solutionResults === null
                 ?
                   <Spinner />
                 :
                  <>
-                   <FaPaperPlane style={{ marginRight: "0.5rem" }} />
+                   <FaPaperPlane style={{ marginRight: "0.5rem", color: "white" }} />
                    Отправить решение
                  </>
               }
@@ -221,7 +224,8 @@ const HistoryWrapper = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 500px;
+  margin-top: 50px;
+  width: 100%;
 `;
 
 const Button = styled.button`
@@ -317,8 +321,11 @@ const StyledTextarea = styled.textarea`
 `;
 
 const SubmitButton = styled.button`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background-color: #e00000;
-  color: #000;
+  color: #ffffff;
   padding: 0.5rem 1rem;
   border-radius: 8px;
   border: none;
