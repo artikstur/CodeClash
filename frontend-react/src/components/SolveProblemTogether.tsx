@@ -1,14 +1,21 @@
 import React, { useState } from "react";
-import styled from "styled-components";
-import { FaBolt } from "react-icons/fa";
+import styled, {keyframes} from "styled-components";
 import type { GetProblemResponse } from "../interfaces/api/responses/GetProblemsResponse.ts";
 import { useGetTestCases } from "../hooks/api/useGetTestCases.ts";
+import { FaBolt, FaPaperPlane } from "react-icons/fa";
+import { LinearProgress, Box, Typography } from "@mui/material";
+
 
 const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
   const { data: testCases = [], isLoading: isLoadingTests } = useGetTestCases(problem.id);
   const [activeTestIndex, setActiveTestIndex] = useState(0);
-
   const activeTest = testCases[activeTestIndex];
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [code, setCode] = useState("");
+
+  const [progress, setProgress] = useState(70);
+  const [opponentProgress, setOpponentProgress] = useState(80);
+
   return (
     <Wrapper>
       <ProblemCard>
@@ -19,6 +26,26 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
             {["Easy", "Medium", "Hard"][problem.level - 1]}
           </LevelTag>
         </Title>
+        <Button onClick={() => setIsEditorOpen(true)}>Открыть редактор</Button>
+        <Box sx={{ width: "100%", mt: 3 }}>
+          <Typography variant="body2" sx={{ color: "white", mb: 1 }}>
+            Прогресс выполнения: {progress}%
+          </Typography>
+          <AnimatedProgress value={progress} />
+          {/*<Button style={{ marginTop: "1rem" }} onClick={() => setProgress(progress === 70 ? 30 : 70)}>*/}
+          {/*  Сменить прогресс*/}
+          {/*</Button>*/}
+        </Box>
+
+        <Box sx={{ width: "100%", mt: 3 }}>
+          <Typography variant="body2" sx={{ color: "white", mb: 1 }}>
+            Прогресс соперника: {opponentProgress}%
+          </Typography>
+          <AnimatedProgress value={opponentProgress} />
+          {/*<Button style={{ marginTop: "1rem" }} onClick={() => setOpponentProgress(opponentProgress === 80 ? 20 : 80)}>*/}
+          {/*  Сменить прогресс соперника*/}
+          {/*</Button>*/}
+        </Box>
 
         <Description>{problem.description}</Description>
 
@@ -50,9 +77,178 @@ const SolveProblemTogether = ({ problem }: { problem: GetProblemResponse }) => {
           )}
         </TestWrapper>
       </ProblemCard>
+      {isEditorOpen && (
+        <EditorPanel>
+          <EditorHeader>
+            <span>Редактор кода</span>
+            <CloseButton onClick={() => setIsEditorOpen(false)}>✕</CloseButton>
+          </EditorHeader>
+          <EditorContainer>
+            <LineNumbers>
+              {Array.from({ length: code.split("\n").length }, (_, i) => (
+                <span key={i}>{i + 1}</span>
+              ))}
+            </LineNumbers>
+            <StyledTextarea
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Напишите ваш код здесь..."
+              spellCheck={false}
+            />
+          </EditorContainer>
+          <SubmitButton onClick={() => console.log("Отправка кода:", code)}>
+            <FaPaperPlane style={{ marginRight: "0.5rem" }} />
+            Отправить
+          </SubmitButton>
+        </EditorPanel>
+      )}
     </Wrapper>
   );
 };
+
+const AnimatedProgress = ({ value }: { value: number }) => {
+  const [prevValue, setPrevValue] = useState(value);
+
+  React.useEffect(() => {
+    setPrevValue(value);
+  }, [value]);
+
+  return (
+    <ProgressWrapper>
+      <AnimatedBar from={prevValue} to={value} />
+    </ProgressWrapper>
+  );
+};
+
+const fillAnimation = (from: number, to: number) => keyframes`
+  from {
+    width: ${from}%;
+  }
+  to {
+    width: ${to}%;
+  }
+`;
+
+const AnimatedBar = styled.div<{ from: number; to: number }>`
+  height: 100%;
+  background-color: ${({ to }) => (to > 50 ? "#70e000" : "#f48c06")};
+  border-radius: 5px;
+  animation: ${({ from, to }) => fillAnimation(from, to)} 0.8s ease-in-out forwards;
+`;
+
+const ProgressWrapper = styled.div`
+  background-color: #333;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  width: 100%;
+`;
+
+const Button = styled.button`
+  background-color: #a4161a;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+
+  &:hover {
+    background-color: #d00000;
+  }
+`;
+
+const EditorPanel = styled.div`
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 700px;
+  height: 100vh;
+  background-color: #1a1a1a;
+  border-left: 2px solid #a4161a;
+  padding: 1rem;
+  box-shadow: -2px 0 10px rgba(164, 22, 26, 0.3);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+`;
+
+const EditorHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  color: white;
+  font-size: 1.2rem;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: #f40606;
+  }
+`;
+
+const EditorContainer = styled.div`
+  display: flex;
+  background-color: #111;
+  border-radius: 8px;
+  border: 1px solid #333;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(164, 22, 26, 0.3);
+  flex: 1;
+`;
+
+const LineNumbers = styled.div`
+  background-color: #1c1c1c;
+  color: #888;
+  text-align: right;
+  padding: 1rem 0.5rem;
+  user-select: none;
+  font-family: "Courier New", monospace;
+  font-size: 0.95rem;
+  line-height: 1.5rem;
+  min-width: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`;
+
+const StyledTextarea = styled.textarea`
+  flex: 1;
+  background-color: #111;
+  color: #fff;
+  padding: 1rem;
+  border: none;
+  resize: none;
+  font-family: "Courier New", monospace;
+  font-size: 0.95rem;
+  line-height: 1.5rem;
+  outline: none;
+  overflow-y: auto;
+`;
+
+const SubmitButton = styled.button`
+  background-color: #e00000;
+  color: #000;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+
+  &:hover {
+    background-color: #690000;
+  }
+`;
+
 
 const Wrapper = styled.div`
   display: flex;
